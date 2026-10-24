@@ -161,7 +161,7 @@ export function Board({ teams, fx, center, highlight, finish = FINISH }: { teams
             const outward = [cx + 50 * dir[0], cy + 50 * dir[1]];
             return (
               <div key={`tc${t.teamId}`}>
-                <span className={`team-tag${t.active ? ' active' : ''}`} style={{ left: `${(outward[0] / VB) * 100}%`, top: `${(outward[1] / VB) * 100}%`, '--c': COLOR_HEX[t.color] } as CSSProperties}>
+                <span className={`team-tag${t.active ? ' active' : ''}`} style={{ left: `${Math.min(88, Math.max(12, (outward[0] / VB) * 100))}%`, top: `${Math.min(95, Math.max(5, (outward[1] / VB) * 100))}%`, '--c': COLOR_HEX[t.color] } as CSSProperties}>
                   {t.name} · 🃏{t.handCount}{t.shield ? ' 🛡️' : ''}
                 </span>
                 {t.handCount > 0 && (

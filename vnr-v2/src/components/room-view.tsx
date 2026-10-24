@@ -48,7 +48,7 @@ export function SkillCardView({ card, kind, disabledReason, onUse, selected, big
 
 export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomMode }) {
   const projector = mode === 'projector';
-  const { view, error, busy, denied, send, join, serverNow } = useRoom(code, mode);
+  const { view, error, busy, denied, gone, send, join, serverNow } = useRoom(code, mode);
   const [pending, setPending] = useState<SkillCard | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [fx, setFx] = useState<BoardFx | null>(null);
@@ -56,6 +56,8 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
   const [reveal, setReveal] = useState<NonNullable<View['game']>['skillLog'][number] | null>(null);
   const seenSkill = useRef<number | null | undefined>(undefined);
   const seenResolution = useRef<number | null | undefined>(undefined);
+  const wasSeated = useRef(false);
+  const [kicked, setKicked] = useState(false);
   useEffect(() => { try { setPlayerName(localStorage.getItem('vnr_player') ?? ''); } catch { /* storage unavailable */ } }, []);
   const rename = (v: string) => { setPlayerName(v); try { localStorage.setItem('vnr_player', v); } catch { /* ignore */ } };
   useClock();
@@ -88,7 +90,15 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
     return () => clearTimeout(t);
   }, [skillLog]);
 
+  const seatedNow = !!view && view.teams.some((tm) => tm.members.some((m) => view.viewer.role === 'team' && m.id === view.viewer.playerId));
+  useEffect(() => {
+    if (!view) return;
+    if (seatedNow) { wasSeated.current = true; setKicked(false); }
+    else if (wasSeated.current && view.status === 'lobby') { wasSeated.current = false; setKicked(true); }
+  }, [seatedNow, view]);
+
   const teamsById = useMemo(() => Object.fromEntries((view?.teams ?? []).map((t) => [t.id, t])), [view?.teams]);
+  if (gone) return <main className="center-note"><h1>Phòng đã đóng</h1><p className="muted">Quản trị đã xóa phòng {code} hoặc phòng đã hết hạn.</p><Link className="btn primary" href={mode === 'admin' ? '/admin' : '/play'}>{mode === 'admin' ? 'Về danh sách phòng' : 'Vào phòng khác'}</Link></main>;
   if (denied) return <main className="center-note"><p className="error">Phiên quản trị đã hết hạn.</p><Link className="btn primary" href="/admin">Đăng nhập quản trị</Link></main>;
   if (!view) return <main className="center-note">{error ? <><p className="error">{error}</p><Link className="btn" href="/">Về trang chủ</Link></> : 'Đang kết nối phòng…'}</main>;
 
@@ -112,7 +122,7 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
         {isHost && <><span className="chip dark">Quản trị</span><Link className="text-link" href="/admin">← Danh sách phòng</Link></>}
         {!meTeam && !isHost && <span className="chip dark">{projector ? 'Màn chiếu' : 'Khán giả'}</span>}
         {isHost && <Link className="text-link" href={`/rooms/${view.code}/board`} target="_blank">Màn chiếu ↗</Link>}
-        <Link className="text-link" href={isHost ? `/admin/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>
+        {!projector && <Link className="text-link" href={isHost ? `/admin/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>}
       </div>
     </header>
   );
@@ -131,7 +141,7 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
         <main className="shell lobby">
           <section className="panel">
             <p className="eyebrow">PHÒNG CHỜ · {view.teams.reduce((n, t) => n + t.members.length, 0)} NGƯỜI · {filled}/6 ĐỘI</p>
-            <h1>Chọn đội của bạn</h1>
+            <h1>{isHost ? 'Người chơi đang vào phòng' : 'Chọn đội của bạn'}</h1>
             <p className="muted">{isHost ? 'Bạn là quản trị: không chơi, chỉ điều khiển.' : <>Mã phòng <b className="code">{view.code}</b>.</>} Có 6 đội (màu cố định). <b>Mỗi người vào đội sẽ có một con ngựa riêng</b>, tối đa 6 người mỗi đội. Cần ít nhất 2 đội có người để bắt đầu.</p>
             <div className="rule-chips">
               <span>🐴 Tung <b>{exitText}</b> để xuất chuồng</span>
@@ -164,9 +174,11 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
                 );
               })}
             </div>
+            {kicked && <p className="notice warn">Bạn đã bị quản trị gỡ khỏi đội. Hãy chọn lại một đội nếu muốn tiếp tục.</p>}
             {canPick && playerName.trim().length < 2 && !mine && <p className="notice">Nhập tên của bạn rồi bấm “Vào đội này”.</p>}
             {mine && <p className="notice">Bạn đang ở {mine.name}. Có thể chuyển sang đội khác trước khi bắt đầu; hãy giữ nguyên trang này.</p>}
             {isHost && <button className="btn primary big" disabled={busy || filled < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({filled} đội)</button>}
+            {isHost && filled < 2 && <p className="muted small">Cần ít nhất 2 đội có người chơi mới bắt đầu được. Gửi mã <b className="code">{view.code}</b> cho người chơi.</p>}
             {isHost && <div className="share"><span>Gửi cho người chơi (mã <b className="code">{view.code}</b>):</span><input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} /></div>}
           </section>
           <section className="panel board-wrap"><Board teams={boardTeams} /></section>
@@ -181,6 +193,7 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
   const turn = g.players[turnTeam];
   const actor = turn.members.find((m) => m.id === g.actingMemberId);
   const actorHorse = turn.horses.find((h) => h.memberId === g.actingMemberId);
+  const actorOffline = !!actor && view.teams.some((tm) => tm.members.some((m) => m.id === actor.id && !m.online));
   const myTurn = !!meId && meId === g.actingMemberId && g.phase !== 'finished' && !g.paused;
   const q = g.question;
   const hand = view.hand;
@@ -266,6 +279,8 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
                   <h2 style={{ color: tint(turnTeam) }}>{myTurn ? 'Đến lượt bạn!' : `${teamName(turnTeam)} · ${actor?.name}`}</h2></div>
                 {secs !== null && <div className={`timer${secs <= 5 ? ' low' : ''}`}>{g.paused ? '⏸' : ''}{secs}s</div>}
               </div>
+              {actorOffline && <p className="notice warn">⚠ {actor?.name} đang mất kết nối. Hệ thống sẽ tự chơi thay sau vài giây.</p>}
+              {secs === 0 && g.phase === 'question' && !g.paused && <p className="muted small">Hết giờ, đang tính kết quả…</p>}
               {actorHorse && actorHorse.progress === 0 && g.phase === 'roll' && (
                 <p className="hint">🐴 Ngựa {myTurn ? 'của bạn' : `của ${actor?.name}`} đang ở chuồng: cần tung <b>{exitText}</b> để xuất chuồng (vẫn được trả lời để nhận thẻ).</p>
               )}
@@ -279,7 +294,7 @@ export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomM
                   <p className="q-text">{q.text}</p>
                   <div className="options">
                     {q.options.map((o, i) => (
-                      <button key={i} className="option" disabled={!myTurn || busy || q.removed.includes(i)} onClick={() => run({ type: 'game', action: { type: 'answer', index: i } })}>
+                      <button key={i} className="option" disabled={!myTurn || busy || q.removed.includes(i) || secs === 0} onClick={() => run({ type: 'game', action: { type: 'answer', index: i } })}>
                         <b>{LETTERS[i]}</b>{q.removed.includes(i) ? <s>{o}</s> : o}
                       </button>
                     ))}

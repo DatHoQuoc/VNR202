@@ -35,6 +35,9 @@ export type RoomMap = Map<string, RoomRecord>;
 const rng = (): number => randomInt(0, 2 ** 32) / 2 ** 32;
 const token = (): string => randomBytes(18).toString('base64url');
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/** Player not heard from for this long counts as disconnected; the game then plays their turn after AUTOPLAY_MS. */
+export const OFFLINE_MS = 20_000;
+const AUTOPLAY_MS = 4_000;
 const bump = (room: RoomRecord): void => { room.revision += 1; };
 
 export const teamIdOf = (slot: number): string => `t${slot + 1}-${TEAM_COLORS[slot]}`;
@@ -55,7 +58,14 @@ export function getRoom(rooms: RoomMap, code: string): RoomRecord | null {
   const room = rooms.get(code.toUpperCase());
   if (!room) return null;
   if (room.game) {
-    const next = tick(room.game, Date.now(), rng, QUESTION_BANK);
+    const now = Date.now();
+    // A disconnected acting player must not stall everybody for a whole turn: play for them after a short grace period.
+    const g = room.game;
+    const acting = room.players.find((p) => p.id === g.actingMemberId);
+    if (acting && !g.paused && g.deadline !== null && g.phase !== 'finished' && now - acting.lastSeen > OFFLINE_MS && g.deadline > now + AUTOPLAY_MS) {
+      room.game = { ...g, deadline: now + AUTOPLAY_MS };
+    }
+    const next = tick(room.game, now, rng, QUESTION_BANK);
     if (next !== room.game) { room.game = next; bump(room); }
     if (room.game.phase === 'finished') room.status = 'finished';
   }

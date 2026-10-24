@@ -87,6 +87,17 @@ Một buổi chơi: quản trị vào `/admin` → đăng nhập → **Tạo ph�
 
 `npm test` chạy 20 test luật chơi; `npm run typecheck` kiểm tra cả Next và NestJS.
 
+## Mô phỏng Playwright chạy từ đầu (`e2e/simulate.cjs`)
+
+Kịch bản đóng vai khách, quản trị, 8 người chơi, khán giả và màn chiếu: đăng nhập sai/đúng, tạo phòng, vào đội (tên trùng, tên chứa HTML, đội đầy 6 người, chuyển đội, rời đội, bị admin xóa), bắt đầu, đổ xúc xắc → câu hỏi → trả lời, tạm dừng, tải lại trang, dùng thẻ (chọn mục tiêu, hiệu ứng, bảng thẻ đã dùng), đá ngựa, khán giả vào muộn, chơi đến hết ván, chơi lại, kết thúc sớm, hết giờ, mất kết nối, xóa phòng khi người chơi còn trong phòng, đăng xuất, màn hình 1280×720; kèm các phép thử tấn công (gọi API quản trị khi chưa đăng nhập, người chơi gửi lệnh `start/end/…`, CSRF, đoán mật khẩu, rò rỉ khóa/đáp án trong JSON).
+
+```bash
+# backend và frontend đang chạy như phần "Chạy"
+ADMIN_PASSWORD=mat-khau BASE=http://localhost:3000 npm run e2e
+```
+
+Kết quả nằm trong `screen/`: mỗi màn hình một ảnh `NN-ten.png` và `screen/REPORT.md` (các bước đạt/không đạt, danh sách phát hiện theo mức độ, lỗi console, mục lục ảnh). Cần gói `playwright` (có sẵn trong container đám mây, nơi khác chạy `npm i -D playwright`). Một lần chạy mất khoảng 3-4 phút.
+
 ## Ngân hàng câu hỏi
 
 `src/game/questions.ts`: 40 câu trắc nghiệm 4 đáp án, mỗi câu có gợi ý, lời giải thích và số trang (`ref`) theo bản trích Chương I. **Hãy đối chiếu số trang với giáo trình bản của nhóm** trước khi nộp (08_Source_Verification_Log). Thêm câu mới bằng cách thêm một dòng vào mảng `rows`.

@@ -23,14 +23,16 @@ export function useRoom(code: string, mode: RoomMode = 'player') {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [denied, setDenied] = useState(false);
+  const [gone, setGone] = useState(false);
+  const hadView = useRef(false);
   const offset = useRef(0);
 
-  const apply = useCallback((next: RoomView) => { offset.current = next.serverNow - Date.now(); setView(next); }, []);
+  const apply = useCallback((next: RoomView) => { offset.current = next.serverNow - Date.now(); hadView.current = true; setView(next); }, []);
   useEffect(() => {
     let alive = true;
     const load = async () => {
       try { const next = await call(`${base}/${code}`); if (alive) { apply(next); setError(null); } }
-      catch (e) { if (alive) { const m = e instanceof Error ? e.message : 'Mất kết nối.'; setError(m); if (mode === 'admin' && /đăng nhập/i.test(m)) setDenied(true); } }
+      catch (e) { if (alive) { const m = e instanceof Error ? e.message : 'Mất kết nối.'; setError(m); if (mode === 'admin' && /đăng nhập/i.test(m)) setDenied(true); if (hadView.current && /Không tìm thấy phòng/.test(m)) setGone(true); } }
     };
     load();
     const timer = setInterval(load, 1000);
@@ -52,7 +54,7 @@ export function useRoom(code: string, mode: RoomMode = 'player') {
   }, [code, apply]);
 
   const serverNow = useCallback(() => Date.now() + offset.current, []);
-  return { view, error, busy, denied, send, join, serverNow };
+  return { view, error, busy, denied, gone, send, join, serverNow };
 }
 
 /** Re-renders a few times a second so countdowns stay smooth between polls. */

@@ -216,3 +216,5 @@ input:not([type=range]) { width:100%; border:1px solid #cbd4c9; background:#fffe
 code { background:var(--green-soft); padding:1px 6px; border-radius:5px; }
 
 .status { white-space:nowrap; display:inline-block; } .row-actions .btn { white-space:nowrap; } .row-actions .text-link { white-space:nowrap; }
+
+.notice.warn { background:#fdecea; border-color:#f0b9b3; color:#8e2a22; }

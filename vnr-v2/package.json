@@ -12,7 +12,8 @@
     "backend:build": "tsc -p backend/tsconfig.json && node -e \"require('fs').writeFileSync('dist-backend/package.json','{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "backend:start": "node dist-backend/backend/src/main.js",
     "backend:dev": "tsc -p backend/tsconfig.json && node --watch dist-backend/backend/src/main.js",
-    "build:all": "npm run backend:build && npm run build"
+    "build:all": "npm run backend:build && npm run build",
+    "e2e": "node e2e/simulate.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.8",

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex">
+  <title>VNR202 · Bảng điều khiển MC</title>
+  <link rel="stylesheet" href="host.css">
+</head>
+<body>
+  <!-- Đăng nhập -->
+  <section id="login" class="login" hidden>
+    <form id="login-form" class="card" autocomplete="off">
+      <h1>Bảng điều khiển MC</h1>
+      <p class="muted">Chỉ mở trên laptop của MC, không chiếu lên màn hình lớp.</p>
+      <label>Khóa MC (host key)
+        <input id="key" type="password" autocomplete="off" spellcheck="false" required>
+      </label>
+      <p id="login-err" class="err" role="alert" hidden></p>
+      <button class="primary" type="submit">Vào bảng điều khiển</button>
+    </form>
+  </section>
+
+  <div id="dash" hidden>
+    <div id="banner" class="banner" role="alert" hidden>
+      <span id="banner-text"></span>
+      <button id="banner-x" type="button" aria-label="Đóng thông báo">Đóng</button>
+    </div>
+
+    <header class="bar">
+      <div class="room"><span>Mã phòng</span><strong id="code">—</strong></div>
+      <div class="kv"><span>Giai đoạn</span><strong id="phase">—</strong></div>
+      <div class="kv"><span>Đã vào</span><strong id="joined">0</strong></div>
+      <div class="kv"><span>Đang online</span><strong id="online">0</strong></div>
+      <div class="bar-right">
+        <span id="conn" class="conn is-wait" role="status"><i></i><b id="conn-text">Đang kết nối…</b></span>
+        <button id="logout" type="button" class="small">Đăng xuất</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card span2 next">
+        <h2>Bước tiếp theo</h2>
+        <button id="next" class="primary huge" type="button" disabled>—</button>
+        <div id="confirm" class="confirm" hidden>
+          <p id="confirm-text"></p>
+          <button id="confirm-yes" type="button" class="danger">Xác nhận</button>
+          <button id="confirm-no" type="button">Hủy</button>
+        </div>
+        <p id="next-hint" class="muted"></p>
+      </section>
+
+      <section class="card">
+        <h2>Trình tự</h2>
+        <ol id="steps" class="steps"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Trạm 0 · x% đầu buổi</h2>
+        <form id="open-form" class="row" novalidate>
+          <input id="open-pct" type="number" min="0" max="100" step="any" inputmode="decimal" aria-label="x% đầu buổi">
+          <span class="unit">%</span>
+          <button class="primary" type="submit">Lưu</button>
+        </form>
+        <p class="muted">Đếm giơ tay: số người chọn D / tổng.</p>
+        <form id="calc-form" class="row" novalidate>
+          <input id="calc-d" type="number" min="0" step="1" aria-label="Số người chọn D" placeholder="D">
+          <span class="unit">/</span>
+          <input id="calc-total" type="number" min="1" step="1" aria-label="Tổng số người" placeholder="tổng">
+          <button type="submit">Tính %</button>
+        </form>
+        <p id="open-state" class="muted"></p>
+      </section>
+
+      <section class="card span2">
+        <h2 id="live-title">Vòng hiện tại</h2>
+        <div class="counts">
+          <div><span>Đã chọn</span><strong id="c-picks">0</strong><small id="c-picks-of"></small></div>
+          <div><span>Đã đoán</span><strong id="c-guesses">0</strong><small id="c-guesses-of"></small></div>
+        </div>
+        <table class="tbl" id="team-table">
+          <thead><tr><th>Nhóm</th><th>Đã vào</th><th>Online</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="muted">Phân bố đáp án chỉ hiện sau khi công bố.</p>
+      </section>
+
+      <section class="card span2">
+        <h2>Các vòng</h2>
+        <table class="tbl" id="round-table">
+          <thead><tr><th>Vòng</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card span2">
+        <div class="tabs" id="res-tabs" role="tablist"></div>
+        <div id="res-body"></div>
+      </section>
+
+      <section class="card span2">
+        <h2>Người chơi</h2>
+        <div class="scroll"><table class="tbl" id="player-table">
+          <thead><tr><th>Tên</th><th>Nhóm</th><th>Từ vòng</th><th>Online</th><th>Miễn vòng 1</th><th>Miễn vòng 2</th><th>Miễn vòng 3</th><th>Miễn vòng 4</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+
+      <section class="card span2">
+        <h2>Xếp hạng <span class="tag">chỉ MC xem — ẩn với lớp</span></h2>
+        <table class="tbl" id="rank-table">
+          <thead><tr><th>Hạng</th><th>Nhóm</th><th>Điểm</th><th>Từng vòng</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="rank-empty" class="muted" hidden>Chưa có vòng nào được tính điểm.</p>
+      </section>
+
+      <section class="card span2">
+        <h2>Cảm nhận</h2>
+        <div class="row">
+          <button id="ref-open" type="button">Mở khung cảm nhận</button>
+          <button id="ref-close" type="button">Đóng khung cảm nhận</button>
+          <span id="ref-state" class="muted"></span>
+        </div>
+        <ul id="ref-list" class="refs"></ul>
+        <p id="ref-empty" class="muted">Chưa có cảm nhận nào.</p>
+      </section>
+
+      <section class="card span2">
+        <h2>Kết quả</h2>
+        <button id="download" type="button">Tải kết quả (JSON)</button>
+      </section>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="host.js"></script>
+</body>
+</html>

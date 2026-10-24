@@ -68,6 +68,23 @@ describe('player page', () => {
   });
 });
 
+describe('host dashboard page', () => {
+  it('is served at /host/ and does not shadow the host API', async () => {
+    const page = await fetch(`${base}/host/`);
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain('<title>VNR202 · Bảng điều khiển MC</title>');
+    expect((await fetch(`${base}/host/host.js`)).status).toBe(200);
+    expect((await fetch(`${base}/host/host.css`)).status).toBe(200);
+    // API routes under the same prefix still need the key and still work with it
+    for (const path of ['state', 'players', 'results', 'ranking', 'reflections']) {
+      expect((await fetch(`${base}/host/${path}`)).status).toBe(401);
+      expect((await fetch(`${base}/host/${path}`, { headers: { 'x-host-key': 'wrong' } })).status).toBe(401);
+    }
+    expect((await fetch(`${base}/host/state`, { headers: { 'x-host-key': 'test-key' } })).status).toBe(200);
+    expect((await fetch(`${base}/host/joining/open`, { method: 'POST' })).status).toBe(401);
+  });
+});
+
 describe('full session', () => {
   const P: Record<string, Awaited<ReturnType<typeof player>>> = {};
 

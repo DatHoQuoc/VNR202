@@ -1,0 +1,49 @@
+{
+  "_comment": "Texts mirror KichBan v03 (trạm 0 và 9B). Edit here when the script changes.",
+  "opening": {
+    "prompt": "Nếu bạn soạn Cương lĩnh năm 1930, bạn xếp tư bản An Nam chưa rõ mặt phản cách mạng vào đâu?",
+    "options": { "A": "Nòng cốt", "B": "Liên lạc, kéo về", "C": "Lợi dụng, làm cho trung lập", "D": "Phải đánh đổ" },
+    "note": "Asked by show of hands at station 0; the MC types the result via POST /host/opening."
+  },
+  "rounds": [
+    {
+      "n": 1,
+      "title": "Làm gì trước?",
+      "step1": {
+        "prompt": "Năm 1930, nếu chỉ được đặt một việc lên hàng đầu?",
+        "options": { "A": "Giành độc lập dân tộc", "B": "Chia ruộng đất cho dân cày", "C": "Xin chính quyền Pháp cải cách", "D": "Khôi phục chế độ vua chúa" }
+      },
+      "step2": { "ask": "Bao nhiêu % các nhóm khác chọn B?", "target": "B" }
+    },
+    {
+      "n": 2,
+      "title": "Tư bản An Nam: bạn hay thù?",
+      "step1": {
+        "prompt": "Nếu bạn soạn Cương lĩnh năm 1930, bạn xếp tư bản An Nam chưa rõ mặt phản cách mạng vào đâu?",
+        "options": { "A": "Nòng cốt", "B": "Liên lạc, kéo về", "C": "Lợi dụng, làm cho trung lập", "D": "Phải đánh đổ" }
+      },
+      "step2": { "ask": "Bao nhiêu % các nhóm khác chọn D (phải đánh đổ)?", "target": "D" },
+      "compareOpening": true
+    },
+    {
+      "n": 3,
+      "title": "Bằng cách nào?",
+      "step1": {
+        "prompt": "Công nhân chỉ hơn 22 vạn người. Bạn chọn cách nào?",
+        "options": { "A": "Khởi nghĩa ngay bằng nhóm nhỏ tinh nhuệ", "B": "Cải cách ôn hòa", "C": "Trông vào nước ngoài", "D": "Vận động đông đảo quần chúng cùng đứng lên" }
+      },
+      "step2": { "ask": "Bao nhiêu % các nhóm khác chọn A?", "target": "A" }
+    },
+    {
+      "n": 4,
+      "title": "Câu này là của ai?",
+      "step1": {
+        "prompt": "\"Cương lĩnh phân loại lực lượng theo thái độ chính trị, không chỉ theo nguồn gốc giai cấp.\" là:",
+        "options": { "A": "Lời văn kiện", "B": "Nhận xét của giáo trình", "C": "Cách hiểu của nhóm 7", "D": "Không chắc" }
+      },
+      "step2": { "ask": "Bao nhiêu % các nhóm khác chọn A?", "target": "A" },
+      "correctOption": "C"
+    }
+  ],
+  "reflection": { "prompt": "Một điều bạn bất ngờ nhất hôm nay là gì?" }
+}

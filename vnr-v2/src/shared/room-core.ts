@@ -12,7 +12,6 @@ export interface RoomRecord {
   code: string;
   title: string;
   createdAt: number;
-  hostToken: string;
   players: LobbyPlayer[];
   status: 'lobby' | 'playing' | 'finished';
   game: GameState | null;
@@ -45,7 +44,7 @@ export function createRoom(rooms: RoomMap, title: string, options: GameOptions =
   let code = '';
   do { code = Array.from({ length: 5 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join(''); } while (rooms.has(code));
   const room: RoomRecord = {
-    code, title: title.trim().slice(0, 60) || 'Cá Ngựa Cách Mạng', createdAt: Date.now(), hostToken: token(),
+    code, title: title.trim().slice(0, 60) || 'Cá Ngựa Cách Mạng', createdAt: Date.now(),
     players: [], status: 'lobby', game: null, options, revision: 1
   };
   rooms.set(code, room);
@@ -89,8 +88,8 @@ export function leaveSlot(room: RoomRecord, existing: LobbyPlayer): void {
   bump(room);
 }
 
-export function viewerFor(room: RoomRecord, hostToken?: string, playerToken?: string): Viewer {
-  if (hostToken && hostToken === room.hostToken) return { role: 'host' };
+/** Player-facing identity from the player cookie; admins get `{ role: 'host' }` from the admin API instead. */
+export function playerViewer(room: RoomRecord, playerToken?: string): Viewer {
   const p = playerToken ? room.players.find((x) => x.token === playerToken) : undefined;
   if (p) { p.lastSeen = Date.now(); return { role: 'team', teamId: teamIdOf(p.slot), playerId: p.id }; }
   return { role: 'spectator' };

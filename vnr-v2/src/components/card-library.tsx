@@ -13,7 +13,7 @@ export function CardLibrary({ code }: { code?: string }) {
 
   useEffect(() => {
     if (!code) return;
-    fetch(`/api/rooms/${code}/bank`, { cache: 'no-store' })
+    fetch(`/api/admin/rooms/${code}/bank`, { cache: 'no-store' })
       .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); setBank(d.questions); })
       .catch((e) => setError(e instanceof Error ? e.message : 'Không tải được ngân hàng câu hỏi.'));
   }, [code]);
@@ -27,7 +27,7 @@ export function CardLibrary({ code }: { code?: string }) {
 
   return (
     <>
-      <header className="topbar"><Link href="/" className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</Link>{code ? <Link href={`/rooms/${code}`} className="text-link">← Về phòng</Link> : <Link href="/" className="text-link">← Trang chủ</Link>}</header>
+      <header className="topbar"><Link href="/" className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</Link>{code ? <Link href={`/admin/rooms/${code}`} className="text-link">← Về phòng điều khiển</Link> : <Link href="/" className="text-link">← Trang chủ</Link>}</header>
       <main className="shell library">
         <section>
           <p className="eyebrow">BỘ BÀI KỸ NĂNG · {SKILLS.length} LOẠI · {total} THẺ</p>
@@ -43,7 +43,7 @@ export function CardLibrary({ code }: { code?: string }) {
         <section className="panel">
           <p className="eyebrow">NGÂN HÀNG CÂU HỎI · CHƯƠNG I</p>
           <h2>{bank ? `${bank.length} câu hỏi trắc nghiệm` : 'Ngân hàng câu hỏi'}</h2>
-          {!code && <p className="muted">Đáp án chỉ hiển thị cho người điều khiển phòng để không lộ đề. Hãy mở trang này từ liên kết <b>“Thẻ & câu hỏi”</b> trong phòng của bạn.</p>}
+          {!code && <p className="muted">Đáp án chỉ hiển thị cho quản trị để không lộ đề. Hãy đăng nhập <Link href="/admin">trang quản trị</Link> rồi mở liên kết <b>“Thẻ & câu hỏi”</b> trong phòng điều khiển.</p>}
           {error && <p className="error">{error}</p>}
           {bank && (
             <>

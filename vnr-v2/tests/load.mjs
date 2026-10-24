@@ -1,4 +1,4 @@
-// Load check: 6 teams + 24 spectators (30 clients) polling every second through the Next proxy.
+// Needs ADMIN_PASSWORD in the environment. Load check: 6 teams + 24 spectators (30 clients) polling every second through the Next proxy.
 const base = process.argv[2] ?? 'http://localhost:3100';
 const J = { 'Content-Type': 'application/json' };
 const lat = [];
@@ -10,11 +10,13 @@ async function req(path, opt = {}) {
   return { r, body };
 }
 const ck = (r) => (r.headers.get('set-cookie') ?? '').split(';')[0];
-const host = await req('/api/rooms', { method: 'POST', headers: J, body: '{}' });
-const hostCookie = ck(host.r), code = host.body.code;
+const login = await req('/api/admin/session', { method: 'POST', headers: J, body: JSON.stringify({ password: process.env.ADMIN_PASSWORD }) });
+const hostCookie = ck(login.r);
+const host = await req('/api/admin/rooms', { method: 'POST', headers: { ...J, cookie: hostCookie }, body: '{}' });
+const code = host.body.code;
 const teams = [];
 for (let i = 0; i < 6; i++) { const j = await req(`/api/rooms/${code}/join`, { method: 'POST', headers: J, body: JSON.stringify({ name: `Đội ${i + 1}` }) }); teams.push({ id: j.body.viewer.teamId, cookie: ck(j.r) }); }
-await req(`/api/rooms/${code}/command`, { method: 'POST', headers: { ...J, cookie: hostCookie }, body: JSON.stringify({ command: { type: 'start' } }) });
+await req(`/api/admin/rooms/${code}/command`, { method: 'POST', headers: { ...J, cookie: hostCookie }, body: JSON.stringify({ command: { type: 'start' } }) });
 let done = false;
 const pollers = Array.from({ length: 24 }, () => (async () => { while (!done) { await req(`/api/rooms/${code}`); await new Promise((r) => setTimeout(r, 1000)); } })());
 let turns = 0, view;

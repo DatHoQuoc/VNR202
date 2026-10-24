@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Board, COLOR_HEX, HorseIcon, positionOf, type BoardFx, type BoardTeam } from './board';
-import { useClock, useRoom, type RoomView as View } from './client';
+import { useClock, useRoom, type RoomMode, type RoomView as View } from './client';
 import { RING_MAX } from '@/game/engine';
 import { skillByKind } from '@/game/skills';
 import { type SkillCard, type SkillKind } from '@/game/types';
@@ -46,8 +46,9 @@ export function SkillCardView({ card, kind, disabledReason, onUse, selected, big
   return <button type="button" className={cls} style={style} disabled={!!disabledReason} onClick={onUse} title={disabledReason ?? def.theme} aria-pressed={selected}>{body}</button>;
 }
 
-export function RoomView({ code, projector = false }: { code: string; projector?: boolean }) {
-  const { view, error, busy, send, join, serverNow } = useRoom(code);
+export function RoomView({ code, mode = 'player' }: { code: string; mode?: RoomMode }) {
+  const projector = mode === 'projector';
+  const { view, error, busy, denied, send, join, serverNow } = useRoom(code, mode);
   const [pending, setPending] = useState<SkillCard | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [fx, setFx] = useState<BoardFx | null>(null);
@@ -88,29 +89,30 @@ export function RoomView({ code, projector = false }: { code: string; projector?
   }, [skillLog]);
 
   const teamsById = useMemo(() => Object.fromEntries((view?.teams ?? []).map((t) => [t.id, t])), [view?.teams]);
+  if (denied) return <main className="center-note"><p className="error">Phiên quản trị đã hết hạn.</p><Link className="btn primary" href="/admin">Đăng nhập quản trị</Link></main>;
   if (!view) return <main className="center-note">{error ? <><p className="error">{error}</p><Link className="btn" href="/">Về trang chủ</Link></> : 'Đang kết nối phòng…'}</main>;
 
   const g = view.game;
   const meTeam = view.viewer.role === 'team' ? view.viewer.teamId : null;
   const meId = view.viewer.role === 'team' ? view.viewer.playerId : null;
-  const isHost = view.viewer.role === 'host' && !projector;
+  const isHost = mode === 'admin' && view.viewer.role === 'host';
   const teamName = (id?: string) => (id ? teamsById[id]?.name ?? '?' : '');
   const tint = (id?: string) => (id && teamsById[id] ? COLOR_HEX[teamsById[id].color] : '#555');
-  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/join?code=${view.code}`;
+  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/play?code=${view.code}`;
   const exitText = view.settings.exitRolls.join(' hoặc ');
 
   const run = (action: Parameters<typeof send>[0]) => { setPending(null); void send(action); };
 
   const header = (
     <header className="topbar">
-      <Link href="/" className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</Link>
+      <Link href={isHost ? '/admin' : '/'} className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</Link>
       <div className="topbar-mid"><strong>{view.title}</strong><span>Mã phòng <b className="code">{view.code}</b></span></div>
       <div className="topbar-end">
         {meTeam && <span className="chip" style={{ background: tint(meTeam) }}>{teamName(meTeam)}</span>}
-        {isHost && <span className="chip dark">Người điều khiển</span>}
-        {!meTeam && !isHost && <span className="chip dark">Khán giả</span>}
-        {!projector && <Link className="text-link" href={`/rooms/${view.code}/board`} target="_blank">Màn chiếu ↗</Link>}
-        <Link className="text-link" href={isHost ? `/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>
+        {isHost && <><span className="chip dark">Quản trị</span><Link className="text-link" href="/admin">← Danh sách phòng</Link></>}
+        {!meTeam && !isHost && <span className="chip dark">{projector ? 'Màn chiếu' : 'Khán giả'}</span>}
+        {isHost && <Link className="text-link" href={`/rooms/${view.code}/board`} target="_blank">Màn chiếu ↗</Link>}
+        <Link className="text-link" href={isHost ? `/admin/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>
       </div>
     </header>
   );
@@ -118,7 +120,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
   /* ------------------------------------------------------------------ lobby */
   if (view.status === 'lobby' || !g) {
     const mine = view.teams.find((t) => t.members.some((m) => m.id === meId));
-    const canPick = view.viewer.role !== 'host' && !projector;
+    const canPick = mode === 'player';
     const filled = view.teams.filter((t) => t.members.length > 0).length;
     const boardTeams: BoardTeam[] = view.teams.map((t) => ({
       teamId: t.id, seat: t.slot, color: t.color, name: t.name, handCount: 0, active: false, shield: false,
@@ -130,7 +132,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
           <section className="panel">
             <p className="eyebrow">PHÒNG CHỜ · {view.teams.reduce((n, t) => n + t.members.length, 0)} NGƯỜI · {filled}/6 ĐỘI</p>
             <h1>Chọn đội của bạn</h1>
-            <p className="muted">Mã phòng <b className="code">{view.code}</b>. Có 6 đội (màu cố định). <b>Mỗi người vào đội sẽ có một con ngựa riêng</b>, tối đa 6 người mỗi đội. Cần ít nhất 2 đội có người để bắt đầu.</p>
+            <p className="muted">{isHost ? 'Bạn là quản trị: không chơi, chỉ điều khiển.' : <>Mã phòng <b className="code">{view.code}</b>.</>} Có 6 đội (màu cố định). <b>Mỗi người vào đội sẽ có một con ngựa riêng</b>, tối đa 6 người mỗi đội. Cần ít nhất 2 đội có người để bắt đầu.</p>
             <div className="rule-chips">
               <span>🐴 Tung <b>{exitText}</b> để xuất chuồng</span>
               <span>🏁 Đội có <b>{view.settings.winHome}</b> ngựa về đích trước thắng</span>
@@ -165,7 +167,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
             {canPick && playerName.trim().length < 2 && !mine && <p className="notice">Nhập tên của bạn rồi bấm “Vào đội này”.</p>}
             {mine && <p className="notice">Bạn đang ở {mine.name}. Có thể chuyển sang đội khác trước khi bắt đầu; hãy giữ nguyên trang này.</p>}
             {isHost && <button className="btn primary big" disabled={busy || filled < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({filled} đội)</button>}
-            {isHost && <input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />}
+            {isHost && <div className="share"><span>Gửi cho người chơi (mã <b className="code">{view.code}</b>):</span><input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} /></div>}
           </section>
           <section className="panel board-wrap"><Board teams={boardTeams} /></section>
           {error && <p className="toast error">{error}</p>}

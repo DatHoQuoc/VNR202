@@ -15,30 +15,34 @@ async function call(url: string, body?: unknown): Promise<RoomView> {
   return data as RoomView;
 }
 
-export function useRoom(code: string) {
+export type RoomMode = 'player' | 'admin' | 'projector';
+
+export function useRoom(code: string, mode: RoomMode = 'player') {
+  const base = mode === 'admin' ? '/api/admin/rooms' : '/api/rooms';
   const [view, setView] = useState<RoomView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [denied, setDenied] = useState(false);
   const offset = useRef(0);
 
   const apply = useCallback((next: RoomView) => { offset.current = next.serverNow - Date.now(); setView(next); }, []);
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      try { const next = await call(`/api/rooms/${code}`); if (alive) { apply(next); setError(null); } }
-      catch (e) { if (alive) setError(e instanceof Error ? e.message : 'Mất kết nối.'); }
+      try { const next = await call(`${base}/${code}`); if (alive) { apply(next); setError(null); } }
+      catch (e) { if (alive) { const m = e instanceof Error ? e.message : 'Mất kết nối.'; setError(m); if (mode === 'admin' && /đăng nhập/i.test(m)) setDenied(true); } }
     };
     load();
     const timer = setInterval(load, 1000);
     return () => { alive = false; clearInterval(timer); };
-  }, [code, apply]);
+  }, [code, apply, base, mode]);
 
   const send = useCallback(async (command: RoomCommand) => {
     setBusy(true);
-    try { apply(await call(`/api/rooms/${code}/command`, { command })); setError(null); }
+    try { apply(await call(`${base}/${code}/command`, { command })); setError(null); }
     catch (e) { setError(e instanceof Error ? e.message : 'Không gửi được lệnh.'); }
     finally { setBusy(false); }
-  }, [code, apply]);
+  }, [code, apply, base]);
 
   const join = useCallback(async (name: string, slot?: number) => {
     setBusy(true);
@@ -48,7 +52,7 @@ export function useRoom(code: string) {
   }, [code, apply]);
 
   const serverNow = useCallback(() => Date.now() + offset.current, []);
-  return { view, error, busy, send, join, serverNow };
+  return { view, error, busy, denied, send, join, serverNow };
 }
 
 /** Re-renders a few times a second so countdowns stay smooth between polls. */

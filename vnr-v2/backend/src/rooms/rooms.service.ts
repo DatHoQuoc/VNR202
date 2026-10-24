@@ -2,11 +2,12 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException,
 import type { GameOptions } from '../../../src/game/engine';
 import { QUESTION_BANK } from '../../../src/game/questions';
 import {
-  claimSlot, createRoom, getRoom, projectRoom, runCommand, viewerFor,
+  claimSlot, createRoom, getRoom, playerViewer, projectRoom, runCommand,
   type LobbyPlayer, type RoomCommand, type RoomMap, type RoomRecord, type Viewer
 } from '../../../src/shared/room-core';
 
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
+const HOST: Viewer = { role: 'host' };
 
 /**
  * Owns all live rooms. One Node process is plenty for 20-30 players: every action is a
@@ -30,6 +31,13 @@ export class RoomsService implements OnModuleDestroy {
     try { return fn(); } catch (e) { throw new BadRequestException(e instanceof Error ? e.message : 'Yêu cầu không hợp lệ.'); }
   }
 
+  find(code: string): RoomRecord {
+    const room = getRoom(this.rooms, code);
+    if (!room) throw new NotFoundException('Không tìm thấy phòng. Kiểm tra lại mã phòng.');
+    return room;
+  }
+
+  /* ---------------------------------------------------------------- admin */
   create(title: string, questionSeconds: number, winHome: number, exitRule?: string): RoomRecord {
     const options: GameOptions = {};
     if (Number.isFinite(questionSeconds) && questionSeconds >= 10 && questionSeconds <= 90) options.questionMs = questionSeconds * 1000;
@@ -38,34 +46,46 @@ export class RoomsService implements OnModuleDestroy {
     return createRoom(this.rooms, title, options);
   }
 
-  find(code: string): RoomRecord {
-    const room = getRoom(this.rooms, code);
-    if (!room) throw new NotFoundException('Không tìm thấy phòng. Kiểm tra lại mã phòng.');
-    return room;
+  list() {
+    return [...this.rooms.values()].map((r) => getRoom(this.rooms, r.code)!).sort((a, b) => b.createdAt - a.createdAt).map((r) => ({
+      code: r.code, title: r.title, status: r.status, createdAt: r.createdAt,
+      players: r.players.length, teams: new Set(r.players.map((p) => p.slot)).size,
+      turn: r.game?.turnNumber ?? 0, winHome: r.options.winHome ?? 1
+    }));
   }
 
-  view(code: string, hostToken?: string, teamToken?: string) {
-    const room = this.find(code);
-    return projectRoom(room, viewerFor(room, hostToken, teamToken));
+  remove(code: string): void {
+    if (!this.rooms.delete(code.toUpperCase())) throw new NotFoundException('Không tìm thấy phòng.');
   }
 
-  join(code: string, name: string, slot: number | undefined, teamToken?: string): { player: LobbyPlayer; view: ReturnType<typeof projectRoom> } {
+  adminView(code: string) { return projectRoom(this.find(code), HOST); }
+
+  adminCommand(code: string, command: RoomCommand) {
     const room = this.find(code);
-    const existing = teamToken ? room.players.find((x) => x.token === teamToken) : undefined;
+    this.guard(() => runCommand(room, HOST, command));
+    return projectRoom(room, HOST);
+  }
+
+  /** Questions with answers: admin only, so players cannot read the answers before the game. */
+  bank() { return { questions: QUESTION_BANK }; }
+
+  /* --------------------------------------------------------------- players */
+  playerView(code: string, playerToken?: string) {
+    const room = this.find(code);
+    return projectRoom(room, playerViewer(room, playerToken));
+  }
+
+  join(code: string, name: string, slot: number | undefined, playerToken?: string): { player: LobbyPlayer; view: ReturnType<typeof projectRoom> } {
+    const room = this.find(code);
+    const existing = playerToken ? room.players.find((x) => x.token === playerToken) : undefined;
     const player = this.guard(() => claimSlot(room, name, slot, existing));
-    return { player, view: projectRoom(room, viewerFor(room, undefined, player.token)) };
+    return { player, view: projectRoom(room, playerViewer(room, player.token)) };
   }
 
-  /** Questions with answers: host only, so players cannot read the answers before the game. */
-  bank(code: string, hostToken?: string) {
+  playerCommand(code: string, command: RoomCommand, playerToken?: string) {
     const room = this.find(code);
-    if (viewerFor(room, hostToken).role !== 'host') throw new ForbiddenException('Chỉ người điều khiển phòng mới xem được đáp án.');
-    return { questions: QUESTION_BANK };
-  }
-
-  command(code: string, command: RoomCommand, hostToken?: string, teamToken?: string) {
-    const room = this.find(code);
-    const viewer: Viewer = viewerFor(room, hostToken, teamToken);
+    const viewer = playerViewer(room, playerToken);
+    if (viewer.role === 'host') throw new ForbiddenException('Không có quyền.');
     this.guard(() => runCommand(room, viewer, command));
     return projectRoom(room, viewer);
   }

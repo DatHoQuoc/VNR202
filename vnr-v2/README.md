@@ -32,27 +32,41 @@ Nguồn luật tham khảo: [mytour.vn](https://mytour.vn/vi/blog/bai-viet/co-du
 
 **Chọn mục tiêu:** khi bấm một thẻ chặn đối thủ, màn hình “Chọn mục tiêu” hiện tất cả ngựa của các đội khác (vị trí, số thẻ của đội, có khiên hay không, lý do không chọn được); rê chuột lên ngựa nào thì ngựa đó sáng lên trên bàn cờ. **Ai dùng thẻ gì** hiện cho cả phòng bằng hiệu ứng lá bài lớn giữa bàn, ô “Thẻ vừa dùng” dưới bàn và bảng “Thẻ kỹ năng đã dùng”. **Số thẻ** của mỗi đội hiện trên bàn cờ (🃏n) và trong bảng xếp hạng. Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
 
-**Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ người điều khiển phòng** xem được (API trả 403 với người khác). Trong phòng có liên kết “Thẻ & câu hỏi”.
+**Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/admin/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ quản trị đã đăng nhập** xem được (API trả 401 với người khác). Trong trang điều khiển phòng có liên kết “Thẻ & câu hỏi”.
 
 **Giao diện 2.5D (chỉ tối ưu cho laptop/PC, không có bố cục điện thoại):** bàn diorama bãi cỏ nghiêng trên nền trời (CSS perspective) với bản đồ 6 cánh, ô gạch kem, ô xuất phát ★ màu đội, đường về nhà đánh số, chuồng ngựa, cây cối đứng thẳng; quân ngựa hình đầu ngựa nhảy khi đến lượt, bị đá thì bay về chuồng kèm chữ “ĐÁ!” và rung bàn; xúc xắc ở giữa bàn; bàn thẻ dưới bàn cờ (bộ bài, thẻ vừa dùng, luật xuất chuồng); thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
+
+## Màn hình và phân quyền
+
+| Địa chỉ | Dành cho | Nội dung |
+|---|---|---|
+| `/` | Mọi người | Giới thiệu luật, 10 thẻ, hai cổng vào: người chơi / quản trị |
+| `/play` (và `/join?code=`) | **Người chơi** | Nhập mã phòng → vào phòng |
+| `/rooms/<mã>` | **Người chơi** | Nhập tên, chọn đội, chơi (đổ xúc xắc, trả lời, dùng thẻ). Không có quyền điều khiển |
+| `/admin` | **Quản trị** (mật khẩu) | Đăng nhập, **tạo phòng**, danh sách phòng đang mở (trạng thái, số người), mở/xóa phòng |
+| `/admin/rooms/<mã>` | **Quản trị** | Điều khiển phòng: xóa người chơi, bắt đầu, tạm dừng, kết thúc, chơi lại; không chơi |
+| `/admin/rooms/<mã>/cards` | **Quản trị** | Thẻ kỹ năng và ngân hàng câu hỏi kèm đáp án |
+| `/rooms/<mã>/board` | Màn chiếu lớp | Chỉ xem, không đáp án, không bài trên tay |
+| `/cards` | Mọi người | 10 lá bài kỹ năng |
+
+Mật khẩu quản trị là biến môi trường `ADMIN_PASSWORD` của backend (từ 6 ký tự). Nếu bỏ trống, backend tự sinh mật khẩu tạm và in ra log khi khởi động. Phiên đăng nhập là cookie httpOnly có chữ ký, hết hạn sau 12 giờ; nhập sai quá 8 lần trong 5 phút thì bị chặn tạm thời. API quản trị nằm dưới `/api/admin/*` và trả 401 nếu chưa đăng nhập; API người chơi `/api/rooms/*` không có lệnh tạo phòng hay điều khiển.
 
 ## Kiến trúc: Next.js (giao diện) + NestJS (backend)
 
 ```
 vnr-v2/
-├─ src/app, src/components   Next.js 16: trang chủ, phòng chờ, bàn cờ SVG, màn chiếu (/rooms/<mã>/board)
+├─ src/app, src/components   Next.js 16: trang chủ, /play, /admin, phòng, màn chiếu
 ├─ src/game                  Luật chơi thuần TypeScript (engine, 10 thẻ, 40 câu hỏi), dùng chung FE/BE/test
 ├─ src/shared/room-core.ts   Logic phòng/đội/phân quyền, projectRoom (ẩn đáp án và tay bài đối thủ)
-├─ backend/                  NestJS 11: RoomsModule (controller + service), ErrorFilter
+├─ backend/                  NestJS 11: AdminModule (đăng nhập, quản lý phòng), RoomsModule (người chơi), ErrorFilter
 ├─ slides/                   Bộ slide showcase 12 trang theo template FA26 + đánh giá
-└─ tests/                    engine.test.ts (17 test), load.mjs (30 client)
+└─ tests/                    engine.test.ts (20 test), load.mjs (30 client)
 ```
 
 * Trình duyệt chỉ nói chuyện với Next; Next **rewrite `/api/*` sang NestJS** (`BACKEND_URL`, mặc định `http://localhost:4000`) nên cookie là first-party, không cần CORS.
 * NestJS giữ phòng trong bộ nhớ và xử lý mọi lệnh **đồng bộ, tuần tự**, nên không có race giữa các đội. Phòng tự dọn sau 12 giờ.
-* API: `POST /api/rooms`, `GET /api/rooms/:code`, `POST /api/rooms/:code/join`, `POST /api/rooms/:code/command`.
-* Đáp án đúng **không bao giờ rời server**; tay bài chỉ gửi cho chính đội đó; lệnh ghi đòi `Content-Type: application/json` (chặn CSRF cross-site).
-* Client lấy trạng thái bằng polling 1 giây. Đo thử 6 đội + 24 khán giả (30 client) qua proxy Next: p50 ≈ 6 ms, p99 ≈ 90 ms (`node tests/load.mjs`). Nếu cần đẩy tức thời hoặc hơn 100 người, thêm NestJS WebSocket Gateway và đổi `useRoom` ở `src/components/client.ts`.
+* Đáp án đúng **không bao giờ rời server** trước khi lượt kết thúc; tay bài chỉ gửi cho chính đội đó; lệnh ghi đòi `Content-Type: application/json` (chặn CSRF cross-site).
+* Client lấy trạng thái bằng polling 1 giây. Đo thử 6 đội + 24 khán giả (30 client) qua proxy Next: p50 ≈ 4 ms, p99 ≈ 100 ms (`ADMIN_PASSWORD=... node tests/load.mjs`). Nếu cần đẩy tức thời hoặc hơn 100 người, thêm NestJS WebSocket Gateway và đổi `useRoom` ở `src/components/client.ts`.
 * Muốn chạy nhiều instance: thay `Map` trong `RoomsService` bằng Redis, giữ nguyên các method.
 
 ## Chạy
@@ -62,15 +76,16 @@ Cần Node.js ≥ 22.13.
 ```bash
 cd vnr-v2
 npm install
+export ADMIN_PASSWORD='mat-khau-cua-ban'            # Windows PowerShell: $env:ADMIN_PASSWORD='...'
 npm run backend:build && npm run backend:start     # terminal 1: NestJS ở :4000
 npm run dev                                        # terminal 2: Next ở :3000
 ```
 
 Production: `npm run build:all`, rồi `npm run backend:start` và `npm start`. Máy khác trong cùng Wi-Fi vào `http://<IP-máy-chủ>:3000`. Nếu backend ở máy khác: `BACKEND_URL=http://host:4000 npm run build`.
 
-Một buổi chơi: người điều khiển mở trang chủ → **Tạo phòng** → chiếu `/rooms/<mã>/board` lên màn hình lớp → mỗi đội vào bằng mã/liên kết (2–6 đội) → **Bắt đầu**. Người điều khiển có thể tạm dừng, kết thúc sớm (đội dẫn đầu thắng) hoặc chơi lại.
+Một buổi chơi: quản trị vào `/admin` → đăng nhập → **Tạo phòng** → mở `/rooms/<mã>/board` lên màn hình lớp → người chơi vào `/play`, nhập mã, chọn đội → quản trị bấm **Bắt đầu**. Quản trị có thể tạm dừng, kết thúc sớm (đội dẫn đầu thắng) hoặc chơi lại.
 
-`npm test` chạy 17 test luật chơi; `npm run typecheck` kiểm tra cả Next và NestJS.
+`npm test` chạy 20 test luật chơi; `npm run typecheck` kiểm tra cả Next và NestJS.
 
 ## Ngân hàng câu hỏi
 

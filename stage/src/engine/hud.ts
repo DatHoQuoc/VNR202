@@ -5,6 +5,7 @@ import type { UiText } from './types';
 export class Hud {
   private readonly boxes: HTMLElement[] = [];
   private readonly illus: HTMLElement;
+  private readonly offline: HTMLElement;
   private readonly ticks: HTMLElement[] = [];
   private readonly segs: { el: HTMLElement; members: number[] }[] = [];
 
@@ -19,6 +20,12 @@ export class Hud {
       this.boxes.push(b);
     });
     root.appendChild(hud);
+
+    this.offline = document.createElement('div');
+    this.offline.className = 'offline';
+    this.offline.textContent = ui.offline;
+    this.offline.hidden = true;
+    root.appendChild(this.offline);
 
     this.illus = document.createElement('div');
     this.illus.className = 'illus';
@@ -53,6 +60,15 @@ export class Hud {
   /** Light up (or dim) decision box 1..3. */
   setAnswered(box: 1 | 2 | 3, on: boolean): void {
     this.boxes[box - 1].classList.toggle('on', on);
+  }
+
+  /** Dim all three decision boxes (each station sets what it needs). */
+  reset(): void {
+    this.boxes.forEach((b) => b.classList.remove('on'));
+  }
+
+  setOffline(off: boolean): void {
+    this.offline.hidden = !off;
   }
 
   setIllustrative(on: boolean): void {

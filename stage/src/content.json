@@ -12,7 +12,13 @@
       "title": "Trình duyệt này không hiển thị được 3D (WebGL)",
       "hint": "Hãy dùng bản PDF dự phòng (tạo bằng npm run export:stage) hoặc mở trang trên trình duyệt/máy khác."
     },
-    "progress": "Tiến trình các trạm"
+    "progress": "Tiến trình các trạm",
+    "offline": "Mất kết nối — đang thử kết nối lại…",
+    "tags": {
+      "vanKien": "Văn kiện",
+      "giaoTrinh": "Giáo trình",
+      "nhom": "Cách hiểu của nhóm"
+    }
   },
   "stations": [
     {
@@ -224,49 +230,265 @@
     },
     {
       "id": "9A",
-      "title": "Trạm 9A",
+      "title": "Phòng Cương lĩnh",
       "illustrative": true,
       "beats": [
         {
           "overlay": {
-            "kicker": "Trạm 9A",
-            "title": "[nội dung trạm 9A]"
+            "kicker": "Phòng Cương lĩnh",
+            "items": [
+              {
+                "tag": "giaoTrinh",
+                "text": "\"Cương lĩnh chính trị đầu tiên = Chánh cương vắn tắt + Sách lược vắn tắt\"",
+                "source": "GT tr.64"
+              }
+            ]
           }
         },
         {
+          "lightCells": [
+            "muc-tieu"
+          ],
           "overlay": {
-            "kicker": "Trạm 9A",
-            "title": "[nội dung trạm 9A]",
-            "lines": [
-              "[nội dung trạm 9A: dòng văn bản]"
+            "kicker": "Mục tiêu chiến lược",
+            "items": [
+              {
+                "tag": "vanKien",
+                "text": "\"làm tư sản dân quyền c.m và thổ địa c.m để đi tới xã hội cộng sản\"",
+                "source": "VK t.2, tr.2"
+              }
+            ]
+          }
+        },
+        {
+          "lightCells": [
+            "muc-tieu"
+          ],
+          "overlay": {
+            "kicker": "Mục tiêu chiến lược",
+            "columns": [
+              {
+                "heading": "Xã hội",
+                "items": [
+                  "dân chúng được tự do tổ chức",
+                  "nam nữ bình quyền",
+                  "phổ thông giáo dục theo công nông hóa"
+                ]
+              },
+              {
+                "heading": "Kinh tế",
+                "items": [
+                  "thủ tiêu quốc trái",
+                  "thâu sản nghiệp lớn của tư bản đế quốc Pháp giao Chính phủ công nông binh quản lý",
+                  "thâu ruộng đất của đế quốc chia cho dân cày nghèo",
+                  "bỏ sưu thuế cho dân cày nghèo",
+                  "mở mang công – nông nghiệp",
+                  "ngày làm 8 giờ"
+                ]
+              }
             ],
-            "source": "[nguồn]"
+            "source": "(VK t.2, tr.2)"
+          }
+        },
+        {
+          "lightCells": [
+            "muc-tieu",
+            "quoc-te",
+            "vai-tro-dang"
+          ],
+          "overlay": {
+            "kicker": "Quốc tế · Vai trò Đảng",
+            "items": [
+              {
+                "tag": "vanKien",
+                "text": "Liên lạc với các dân tộc bị áp bức và vô sản giai cấp thế giới, nhất là vô sản Pháp",
+                "source": "HCM t.3, tr.3"
+              },
+              {
+                "tag": "vanKien",
+                "text": "\"Đảng là đội tiên phong của vô sản giai cấp\"",
+                "source": "VK t.2, tr.4"
+              }
+            ]
+          }
+        },
+        {
+          "lightCells": [
+            "muc-tieu",
+            "quoc-te",
+            "vai-tro-dang"
+          ],
+          "pulseCells": [
+            "nhiem-vu",
+            "luc-luong",
+            "phuong-phap"
+          ],
+          "overlay": {
+            "title": "Mời cả lớp cùng quyết định"
+          }
+        },
+        {
+          "lightCells": [
+            "muc-tieu",
+            "quoc-te",
+            "vai-tro-dang"
+          ],
+          "overlay": {
+            "join": {
+              "title": "Mở laptop, vào địa chỉ này",
+              "codeLabel": "Mã phòng",
+              "countdownSec": 60,
+              "codeMissing": "[mã phòng]"
+            }
           }
         }
-      ]
+      ],
+      "extra": {}
     },
     {
       "id": "9B",
-      "title": "Trạm 9B",
+      "title": "Bốn điểm quyết định",
       "illustrative": true,
       "beats": [
         {
           "overlay": {
-            "kicker": "Trạm 9B",
-            "title": "[nội dung trạm 9B]"
+            "kicker": "Bốn điểm quyết định",
+            "lines": [
+              "Bước 1: tự chọn nếu bạn là người soạn Cương lĩnh — không chấm điểm.",
+              "Bước 2: đoán % các nhóm KHÁC chọn một đáp án — đoán càng sát càng nhiều điểm.",
+              "Điểm nhóm = trung bình cả nhóm."
+            ]
+          },
+          "lightCells": [
+            "muc-tieu",
+            "quoc-te",
+            "vai-tro-dang"
+          ]
+        },
+        {
+          "live": {
+            "round": 1
           }
         },
         {
+          "live": {
+            "round": 2
+          }
+        },
+        {
+          "live": {
+            "round": 3
+          }
+        },
+        {
+          "live": {
+            "round": 4
+          }
+        },
+        {
+          "finale": true
+        },
+        {
           "overlay": {
-            "kicker": "Trạm 9B",
-            "title": "[nội dung trạm 9B]",
-            "lines": [
-              "[nội dung trạm 9B: dòng văn bản]"
-            ],
-            "source": "[nguồn]"
+            "title": "Một điều bạn bất ngờ nhất hôm nay là gì? — viết 1–2 câu trên laptop, ẩn danh, không chấm điểm."
           }
         }
-      ]
+      ],
+      "extra": {
+        "lowerScreen": "Hạ màn hình xuống, nhìn lên máy chiếu.",
+        "step": {
+          "1": "Bước 1",
+          "2": "Bước 2"
+        },
+        "waiting": "Chờ MC mở vòng {n}",
+        "voided": "Vòng {n} đã bị hủy",
+        "loading": "Đang lấy kết quả…",
+        "comparison": "đầu buổi {x}% → bây giờ {y}% chọn 'đánh đổ'",
+        "distributionTitle": "Cả lớp đã chọn",
+        "answerLabel": "Đáp án",
+        "rounds": {
+          "1": {
+            "cell": "nhiem-vu",
+            "box": 1,
+            "items": [
+              {
+                "tag": "vanKien",
+                "text": "\"Đánh đổ đế quốc chủ nghĩa Pháp và bọn phong kiến, làm cho nước Nam được hoàn toàn độc lập\"",
+                "source": "VK t.2, tr.2"
+              },
+              {
+                "tag": "giaoTrinh",
+                "text": "Chống đế quốc và chống phong kiến là nhiệm vụ cơ bản; chống đế quốc, giành độc lập được đặt ở vị trí hàng đầu",
+                "source": "GT tr.65"
+              }
+            ]
+          },
+          "2": {
+            "cell": "luc-luong",
+            "box": 2,
+            "rings": [
+              {
+                "name": "Vòng trong",
+                "text": "công nhân, dân cày — phải \"thu phục cho được đại bộ phận\"",
+                "tag": "vanKien"
+              },
+              {
+                "name": "Vòng hai",
+                "text": "tiểu tư sản, trí thức, trung nông — \"hết sức liên lạc\"",
+                "tag": "vanKien"
+              },
+              {
+                "name": "Vòng ba",
+                "text": "phú nông, trung – tiểu địa chủ, tư bản An Nam \"mà chưa rõ mặt phản c.m thì phải lợi dụng, ít lâu mới làm cho họ đứng trung lập\"",
+                "tag": "vanKien"
+              },
+              {
+                "name": "Ngoài cùng",
+                "text": "bộ phận \"đã ra mặt phản cách mạng (Đảng Lập hiến, v.v.) thì phải đánh đổ\"",
+                "tag": "vanKien"
+              }
+            ],
+            "items": [
+              {
+                "tag": "giaoTrinh",
+                "text": "Cơ sở của tư tưởng chiến lược đại đoàn kết toàn dân tộc",
+                "source": "GT tr.66"
+              }
+            ],
+            "source": "VK t.2, tr.4; HCM t.3, tr.3; GT tr.66–67"
+          },
+          "3": {
+            "cell": "phuong-phap",
+            "box": 3,
+            "items": [
+              {
+                "tag": "vanKien",
+                "text": "Con đường bạo lực cách mạng của quần chúng; \"không khi nào nhượng một chút lợi ích gì của công nông mà đi vào đường thỏa hiệp\"",
+                "source": "HCM t.3, tr.3; GT tr.66–67"
+              },
+              {
+                "tag": "vanKien",
+                "text": "Có sách lược lôi kéo tiểu tư sản, trí thức, trung nông; bộ phận đã ra mặt phản cách mạng thì phải đánh đổ",
+                "source": "GT tr.67"
+              }
+            ]
+          },
+          "4": {
+            "answer": {
+              "tag": "nhom",
+              "text": "Cách hiểu của nhóm 7, rút ra từ lời văn kiện ở điểm quyết định 2 và nhận xét giáo trình tr.66"
+            }
+          }
+        },
+        "finale": {
+          "title": "Nhóm đoán sát suy nghĩ của lớp nhất là…",
+          "rank": "Hạng {r}",
+          "team": "Nhóm {t}",
+          "score": "{s} điểm",
+          "round": "Vòng {r}",
+          "hidden": "?"
+        }
+      }
     },
     {
       "id": "10",
@@ -291,5 +513,33 @@
         }
       ]
     }
-  ]
+  ],
+  "frame": {
+    "cells": [
+      {
+        "id": "muc-tieu",
+        "label": "Mục tiêu chiến lược"
+      },
+      {
+        "id": "nhiem-vu",
+        "label": "Nhiệm vụ"
+      },
+      {
+        "id": "luc-luong",
+        "label": "Lực lượng"
+      },
+      {
+        "id": "phuong-phap",
+        "label": "Phương pháp"
+      },
+      {
+        "id": "quoc-te",
+        "label": "Quốc tế"
+      },
+      {
+        "id": "vai-tro-dang",
+        "label": "Vai trò Đảng"
+      }
+    ]
+  }
 }

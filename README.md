@@ -44,6 +44,7 @@ npm run build:stage    # type-check + build into public/stage/ ( `npm run build`
 
 Keys: right arrow / PageDown = next beat, left arrow / PageUp = previous beat.
 Review helpers: `/stage/?station=9B&beat=2` (beats are 1-based, 1 = what you see on entering), `&debug=1` (fps, draw calls, which stations are alive), `&hud=1,3` (force decision boxes on).
+The room code is not part of the public state, so pass it once: `/stage/?code=ABCDE` (kept for the tab). The "open your laptop" screen shows `<host>/play` and that code.
 Station texts live in `stage/src/content.json` (placeholders until the real text is pasted in).
 
 ## Session flow

@@ -19,6 +19,34 @@ describe('stage content', () => {
   });
 });
 
+describe('stations 9A and 9B content', () => {
+  const st = (id: string) => content.stations.find((x) => x.id === id)!;
+  const tags = ['vanKien', 'giaoTrinh', 'nhom'];
+
+  it('9A has the six beats, every cell it lights exists, and nothing lights a decision box', () => {
+    const a = st('9A');
+    expect(a.beats).toHaveLength(6);
+    const cellIds = content.frame.cells.map((c) => c.id);
+    expect(content.frame.cells.map((c) => c.label)).toEqual(['Mục tiêu chiến lược', 'Nhiệm vụ', 'Lực lượng', 'Phương pháp', 'Quốc tế', 'Vai trò Đảng']);
+    for (const b of a.beats) for (const id of [...(b.lightCells ?? []), ...(b.pulseCells ?? [])]) expect(cellIds).toContain(id);
+    // the three decision cells stay dark in 9A
+    for (const b of a.beats) expect(b.lightCells ?? []).not.toEqual(expect.arrayContaining(['nhiem-vu']));
+    expect(a.beats[5].overlay?.join?.countdownSec).toBe(60);
+    for (const b of a.beats) for (const it of b.overlay?.items ?? []) expect(tags).toContain(it.tag);
+  });
+
+  it('9B has opening, four live rounds, finale and the closing prompt; reveal text is keyed by round', () => {
+    const b = st('9B');
+    expect(b.beats.map((x) => (x.live ? `r${x.live.round}` : x.finale ? 'finale' : 'text'))).toEqual(['text', 'r1', 'r2', 'r3', 'r4', 'finale', 'text']);
+    const extra = b.extra as { rounds: Record<string, { cell?: string; box?: number; items?: { tag: string }[] }> };
+    expect(Object.keys(extra.rounds)).toEqual(['1', '2', '3', '4']);
+    expect([1, 2, 3].map((n) => extra.rounds[n].box)).toEqual([1, 2, 3]);
+    expect(extra.rounds[4].box).toBeUndefined();
+    expect(extra.rounds[4].cell).toBeUndefined();
+    for (const r of Object.values(extra.rounds)) for (const it of r.items ?? []) expect(tags).toContain(it.tag);
+  });
+});
+
 describe('beat navigation', () => {
   const c = [2, 3, 1];
 

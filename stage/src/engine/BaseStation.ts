@@ -27,7 +27,7 @@ export abstract class BaseStation implements Station {
     this.camera.updateProjectionMatrix();
   }
 
-  exit(): void {
+  exit(_ctx?: Ctx): void {
     this.killTimelines();
   }
 

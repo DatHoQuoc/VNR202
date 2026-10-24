@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gsap } from 'gsap';
+import { GameClient } from '../game/GameClient';
 import { Hud } from './hud';
 import { StationLoader } from './loader';
 import { NEXT_KEYS, PREV_KEYS, next, prev, type Pos, type Query } from './nav';
@@ -37,8 +38,10 @@ export class Engine {
     this.ids = content.stations.map((s) => s.id);
     this.beatCounts = content.stations.map((s) => s.beats.length);
     const hud = new Hud(frame, content.ui, this.ids);
-    const overlay = new Overlay(frame);
-    this.ctx = { renderer, hud, overlay, ui: content.ui };
+    const overlay = new Overlay(frame, content.ui);
+    const game = new GameClient();
+    this.ctx = { renderer, hud, overlay, ui: content.ui, content, game, requestBeat: (id, beat) => this.requestBeat(id, beat) };
+    game.onConnection(() => hud.setOffline(!game.connected));
     this.loader = new StationLoader(this.ctx, content.stations, createStation);
 
     if (query.debug) {
@@ -46,7 +49,6 @@ export class Engine {
       this.debugEl.className = 'debug';
       frame.appendChild(this.debugEl);
     }
-    query.hud.forEach((n) => hud.setAnswered(n as 1 | 2 | 3, true));
 
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('keydown', (e) => this.onKey(e));
@@ -54,7 +56,9 @@ export class Engine {
   }
 
   async start(): Promise<void> {
+    this.ctx.game.start();
     await this.goto(this.query.pos, true);
+    this.query.hud.forEach((n) => this.ctx.hud.setAnswered(n as 1 | 2 | 3, true));
     document.body.dataset.ready = '1';
     this.clock.start();
     this.ctx.renderer.setAnimationLoop(() => this.tick());
@@ -70,6 +74,12 @@ export class Engine {
     if (target) void this.goto(target, false);
   }
 
+  private requestBeat(stationId: string, beat: number): void {
+    if (this.pos.station < 0 || this.ids[this.pos.station] !== stationId) return;
+    const b = Math.min(Math.max(beat, 0), this.beatCounts[this.pos.station] - 1);
+    if (b !== this.pos.beat) void this.goto({ station: this.pos.station, beat: b }, false);
+  }
+
   async goto(target: Pos, instant: boolean): Promise<void> {
     const token = ++this.token;
     const sameStation = this.active && target.station === this.pos.station;
@@ -81,8 +91,10 @@ export class Engine {
       for (const t of tls) if (t.isActive()) t.progress(1); // finish a running beat instead of losing the click
       if (!instant && target.beat === this.pos.beat + 1) tls[target.beat].play(0);
       else this.applyInstant(target.beat);
-      this.ctx.overlay.show(beatContent, instant || target.beat !== this.pos.beat + 1);
+      const stepForward = !instant && target.beat === this.pos.beat + 1;
+      this.ctx.overlay.show(beatContent, !stepForward);
       this.setPos(target);
+      this.active!.beatChanged?.(target.beat, !stepForward);
       return;
     }
 
@@ -90,6 +102,8 @@ export class Engine {
     if (!instant && this.active) await this.fadeTo(1, 0.35);
     if (token !== this.token) return;
     this.active?.exit(this.ctx);
+    this.ctx.overlay.setDock(false);
+    this.ctx.hud.reset();
     const slow = window.setTimeout(() => this.showLoading(true), 150);
     const st = await this.loader.ensure(target.station);
     window.clearTimeout(slow);
@@ -103,6 +117,7 @@ export class Engine {
     this.ctx.hud.setIllustrative(station.illustrative);
     this.ctx.overlay.show(beatContent, true);
     this.setPos(target);
+    st.beatChanged?.(target.beat, true);
     // keep only the current and the next station alive; prepare the next one when idle
     this.loader.retain([target.station, target.station + 1]);
     const nextIdx = target.station + 1;

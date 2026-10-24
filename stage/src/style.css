@@ -1,0 +1,65 @@
+:root {
+  --ink: #f3ead8;
+  --muted: #bfb49d;
+  --gold: #f2c35b;
+  --gold-soft: rgba(242, 195, 91, .18);
+  --panel: rgba(16, 12, 10, .62);
+  --line: rgba(243, 234, 216, .28);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0807; overflow: hidden; color: var(--ink); font-family: var(--sans); }
+#app { position: fixed; inset: 0; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+/* soft scrims keep text and the progress bar readable on a projector over bright scenes */
+#app::before, #app::after { content: ""; position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
+#app::before { bottom: 0; height: 42%; background: linear-gradient(to top, rgba(8, 6, 5, .88), rgba(8, 6, 5, .55) 55%, rgba(8, 6, 5, 0)); }
+#app::after { top: 0; height: 16%; background: linear-gradient(to bottom, rgba(8, 6, 5, .6), rgba(8, 6, 5, 0)); }
+
+/* the overlay is laid out on a fixed 1920x1080 canvas and scaled to the window */
+#frame { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; pointer-events: none; z-index: 2; }
+#fade { position: absolute; inset: 0; z-index: 3; background: #0b0807; opacity: 0; pointer-events: none; }
+
+/* HUD: three decisions */
+.hud { position: absolute; left: 48px; top: 40px; display: flex; gap: 14px; }
+.hud .box {
+  padding: 12px 22px; border: 2px solid var(--line); border-radius: 12px; background: var(--panel);
+  font: 600 26px/1.1 var(--sans); color: var(--muted); letter-spacing: .01em;
+  transition: color .5s, border-color .5s, background .5s, box-shadow .5s;
+}
+.hud .box.on { color: #21160a; background: var(--gold); border-color: var(--gold); box-shadow: 0 0 28px rgba(242, 195, 91, .55); }
+
+/* illustrative label */
+.illus {
+  position: absolute; right: 48px; bottom: 96px; padding: 6px 14px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line); font: 500 20px/1 var(--sans); color: var(--muted);
+  letter-spacing: .04em; transition: opacity .4s;
+}
+
+/* progress bar of stations */
+.progress { position: absolute; left: 48px; right: 48px; bottom: 36px; display: flex; gap: 8px; }
+.progress .seg { flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.progress .bar { display: flex; gap: 3px; height: 8px; }
+.progress .tick { flex: 1; background: rgba(243, 234, 216, .2); border-radius: 4px; transition: background .4s; }
+.progress .seg.past .tick, .progress .tick.past { background: rgba(242, 195, 91, .55); }
+.progress .seg.cur .tick.cur, .progress .tick.cur { background: var(--gold); box-shadow: 0 0 14px rgba(242, 195, 91, .8); }
+.progress .name { font: 600 20px/1 var(--sans); color: var(--muted); text-align: center; }
+.progress .seg.cur .name { color: var(--gold); }
+
+/* beat overlay (text comes from content.json) */
+.beat { position: absolute; left: 96px; right: 96px; bottom: 170px; max-width: 1180px; }
+.beat .kicker { font: 600 26px/1 var(--sans); text-transform: uppercase; letter-spacing: .14em; color: var(--gold); margin-bottom: 18px; }
+.beat .title { font: 700 76px/1.1 var(--serif); margin: 0 0 22px; text-shadow: 0 3px 24px rgba(0, 0, 0, .7); }
+.beat .line { font: 400 38px/1.4 var(--serif); margin: 0 0 12px; color: var(--ink); text-shadow: 0 2px 16px rgba(0, 0, 0, .8); }
+.beat .quote { font: italic 400 42px/1.4 var(--serif); margin: 0 0 12px; padding-left: 26px; border-left: 4px solid var(--gold); }
+.beat .source { font: 500 22px/1.3 var(--sans); color: var(--muted); margin-top: 10px; }
+
+.debug { position: absolute; right: 48px; top: 40px; padding: 8px 14px; border-radius: 8px; background: rgba(0, 0, 0, .65); font: 500 22px/1.4 ui-monospace, Menlo, Consolas, monospace; color: #9fe6a0; white-space: pre; }
+
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font: 600 40px/1 var(--sans); color: var(--muted); background: rgba(11, 8, 7, .85); }
+
+#fallback { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 20px; padding: 48px; background: #0b0807; }
+#fallback h1 { font: 700 48px/1.2 var(--serif); margin: 0; }
+#fallback p { font: 400 28px/1.5 var(--sans); color: var(--muted); margin: 0; max-width: 900px; margin: 0 auto; }
+[hidden] { display: none !important; }

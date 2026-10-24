@@ -2,3 +2,6 @@ node_modules
 dist
 data
 .env
+
+# built stage page and the local cover data (names stay out of the repo)
+public/stage/

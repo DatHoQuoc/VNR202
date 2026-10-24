@@ -33,6 +33,19 @@ Static page served at `/play/` (source in `public/play/`, plain HTML/CSS/JS, no 
 `/host/` (MC's laptop only, never projected): enter `HOST_KEY`, then drive the whole session with the **Bước tiếp theo** button (fixed order, confirm on reveal / void / announce start / end). The key is kept in `sessionStorage` only. The page and the API share the `/host` prefix without clashing: the page is `/host/` plus `host.js` / `host.css`, every API route needs the `x-host-key` header.
 `scripts/host-flow.js` runs a full session through the dashboard with Playwright; `scripts/play-reconnect.js` checks the /play reconnecting indicator.
 
+## Stage (projector, `/stage/`)
+
+Source in `stage/` (Vite + TypeScript + three.js + GSAP, plain CSS overlay), built into `public/stage/` (git-ignored) and served by Nest.
+
+```bash
+npm run dev:stage      # Vite dev server on :5173 (proxies the game API to :3000)
+npm run build:stage    # type-check + build into public/stage/ ( `npm run build` does this too)
+```
+
+Keys: right arrow / PageDown = next beat, left arrow / PageUp = previous beat.
+Review helpers: `/stage/?station=9B&beat=2` (beats are 1-based, 1 = what you see on entering), `&debug=1` (fps, draw calls, which stations are alive), `&hud=1,3` (force decision boxes on).
+Station texts live in `stage/src/content.json` (placeholders until the real text is pasted in).
+
 ## Session flow
 
 `lobby` → `joining` → `rounds` (1..4: **pick → guess → revealed**) → `announce` → `ended`

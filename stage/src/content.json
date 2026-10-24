@@ -1,0 +1,295 @@
+{
+  "_comment": "Placeholder text only. Real station text is pasted by the project owner, station by station.",
+  "ui": {
+    "hud": [
+      "① Làm gì trước?",
+      "② Dựa vào ai?",
+      "③ Bằng cách nào?"
+    ],
+    "illustrative": "Mô phỏng minh họa",
+    "loading": "Đang chuẩn bị trạm…",
+    "noWebgl": {
+      "title": "Trình duyệt này không hiển thị được 3D (WebGL)",
+      "hint": "Hãy dùng bản PDF dự phòng (tạo bằng npm run export:stage) hoặc mở trang trên trình duyệt/máy khác."
+    },
+    "progress": "Tiến trình các trạm"
+  },
+  "stations": [
+    {
+      "id": "0",
+      "title": "Trạm 0",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 0",
+            "title": "[nội dung trạm 0]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 0",
+            "title": "[nội dung trạm 0]",
+            "lines": [
+              "[nội dung trạm 0: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "title": "Trạm 1",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 1",
+            "title": "[nội dung trạm 1]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 1",
+            "title": "[nội dung trạm 1]",
+            "lines": [
+              "[nội dung trạm 1: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Trạm 2",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 2",
+            "title": "[nội dung trạm 2]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 2",
+            "title": "[nội dung trạm 2]",
+            "lines": [
+              "[nội dung trạm 2: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Trạm 3",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 3",
+            "title": "[nội dung trạm 3]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 3",
+            "title": "[nội dung trạm 3]",
+            "lines": [
+              "[nội dung trạm 3: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "title": "Trạm 4",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 4",
+            "title": "[nội dung trạm 4]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 4",
+            "title": "[nội dung trạm 4]",
+            "lines": [
+              "[nội dung trạm 4: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "title": "Trạm 5",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 5",
+            "title": "[nội dung trạm 5]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 5",
+            "title": "[nội dung trạm 5]",
+            "lines": [
+              "[nội dung trạm 5: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "title": "Trạm 6",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 6",
+            "title": "[nội dung trạm 6]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 6",
+            "title": "[nội dung trạm 6]",
+            "lines": [
+              "[nội dung trạm 6: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "title": "Trạm 7",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 7",
+            "title": "[nội dung trạm 7]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 7",
+            "title": "[nội dung trạm 7]",
+            "lines": [
+              "[nội dung trạm 7: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "title": "Trạm 8",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 8",
+            "title": "[nội dung trạm 8]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 8",
+            "title": "[nội dung trạm 8]",
+            "lines": [
+              "[nội dung trạm 8: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "9A",
+      "title": "Trạm 9A",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 9A",
+            "title": "[nội dung trạm 9A]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 9A",
+            "title": "[nội dung trạm 9A]",
+            "lines": [
+              "[nội dung trạm 9A: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "9B",
+      "title": "Trạm 9B",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 9B",
+            "title": "[nội dung trạm 9B]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 9B",
+            "title": "[nội dung trạm 9B]",
+            "lines": [
+              "[nội dung trạm 9B: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "title": "Trạm 10",
+      "illustrative": true,
+      "beats": [
+        {
+          "overlay": {
+            "kicker": "Trạm 10",
+            "title": "[nội dung trạm 10]"
+          }
+        },
+        {
+          "overlay": {
+            "kicker": "Trạm 10",
+            "title": "[nội dung trạm 10]",
+            "lines": [
+              "[nội dung trạm 10: dòng văn bản]"
+            ],
+            "source": "[nguồn]"
+          }
+        }
+      ]
+    }
+  ]
+}

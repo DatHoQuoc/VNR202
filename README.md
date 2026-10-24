@@ -28,6 +28,11 @@ State is in memory (one class = one room) with a JSON snapshot. If the snapshot 
 Static page served at `/play/` (source in `public/play/`, plain HTML/CSS/JS, no build). Students open `http://<host>:3000/play/` (optionally `?code=ABCDE`).
 `scripts/play-flow.js` drives a full session through Playwright against a running server and saves screenshots (`docs/play-screenshots/`).
 
+## MC dashboard
+
+`/host/` (MC's laptop only, never projected): enter `HOST_KEY`, then drive the whole session with the **Bước tiếp theo** button (fixed order, confirm on reveal / void / announce start / end). The key is kept in `sessionStorage` only. The page and the API share the `/host` prefix without clashing: the page is `/host/` plus `host.js` / `host.css`, every API route needs the `x-host-key` header.
+`scripts/host-flow.js` runs a full session through the dashboard with Playwright; `scripts/play-reconnect.js` checks the /play reconnecting indicator.
+
 ## Session flow
 
 `lobby` → `joining` → `rounds` (1..4: **pick → guess → revealed**) → `announce` → `ended`

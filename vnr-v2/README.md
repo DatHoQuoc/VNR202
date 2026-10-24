@@ -2,15 +2,18 @@
 
 Game cá ngựa **tối đa 6 người chơi, mỗi người một con ngựa** ôn tập *Chương I – Đảng Cộng sản Việt Nam ra đời và Cương lĩnh chính trị đầu tiên (2/1930)*. Phát triển từ game thẻ bài "Đấu Trường Tri Thức" (v1, thư mục gốc của repo): v1 là 2 đội đấu máu (HP), v2 là cuộc đua 6 đội về đích.
 
-## Luật chơi
+## Luật chơi (đã đối chiếu luật cờ cá ngựa / Ludo phổ biến)
 
-0. **Chọn ngựa:** vào phòng bằng mã, nhập tên rồi bấm “Chọn ngựa này” ở một trong 6 ô (ngựa số 1 đến 6, mỗi số một màu cố định). Có thể đổi sang ô trống khác hoặc rời ngựa trước khi bắt đầu; cần ≥ 2 người.
-1. Mỗi người một ngựa, xuất phát từ chuồng, chạy **1 vòng đua chung 24 ô** rồi rẽ vào **đường về nhà 4 ô** (an toàn) và tới **ĐÍCH (28 bước)**. Ai về đích trước thắng.
-2. Đến lượt: (tuỳ chọn) dùng **1 thẻ kỹ năng** → **đổ xúc xắc** → trả lời **1 câu hỏi 4 đáp án** (mặc định 30 giây).
-3. **Trả lời đúng**: đi đúng số ô xúc xắc **và nhận 1 thẻ kỹ năng**. **Sai hoặc hết giờ**: *vẫn đi tiếp* nhưng **không nhận thẻ**.
-4. Đáp xuống ô có ngựa đội khác (trừ 6 ô ★) → ngựa đó bị **húc lùi 3 ô**.
-5. Tay tối đa 5 thẻ; nhận thẻ thứ 6 thì thẻ cũ nhất bị bỏ.
-6. Ngựa đi qua mỗi chặng sẽ bật một **mốc lịch sử** (1858, 1911, 1920, 1925, 1929) lấy từ chương.
+Nguồn luật tham khảo: [mytour.vn](https://mytour.vn/vi/blog/bai-viet/co-dua-ngua.html), [fptshop.com.vn](https://fptshop.com.vn/tin-tuc/thu-thuat/cach-choi-co-ca-ngua-156472), [Wikipedia: Ludo](https://en.wikipedia.org/wiki/Ludo), [rarepike.com](https://rarepike.com/ludo/articles/rules-for-beginners/). Các nguồn khác nhau ở vài chi tiết nên bản này chọn như dưới đây.
+
+0. **Đội và ngựa:** có 6 đội, màu cố định (Đỏ, Cam, Vàng, Lục, Lam, Tím). Vào phòng, mỗi người nhập tên rồi chọn một đội; **mỗi người có một con ngựa riêng** (đội 1-6 người). Thành viên trong đội lần lượt đến lượt; thẻ kỹ năng là của cả đội.
+1. **Bản đồ:** hình sao 6 cánh, vòng đua chung **42 ô**, mỗi đội có **chuồng** (đặt ngựa), **ô xuất phát ★** ở đầu cánh và **đường về nhà 4 ô** riêng. Xúc xắc đặt ở giữa bàn. Ngựa đi một vòng đầy đủ rồi rẽ vào đường về nhà.
+2. **Xuất chuồng:** ngựa ở chuồng phải tung **1 hoặc 6** mới ra ô xuất phát (phòng có thể chọn "chỉ 6" – luật cổ điển). Không ra được vẫn được trả lời câu hỏi để nhận thẻ.
+3. **Mỗi lượt:** (tuỳ chọn) dùng **1 thẻ kỹ năng** → **đổ xúc xắc** → trả lời **1 câu hỏi 4 đáp án** (mặc định 30 giây). **Đúng**: nhận **1 thẻ kỹ năng**. **Sai / hết giờ**: không có thẻ nhưng ngựa **vẫn đi tiếp**.
+4. **Đá ngựa:** đáp xuống ô có ngựa đội khác (trừ 6 ô ★ an toàn) thì **ngựa đó bị đá về chuồng** (hiệu ứng "ĐÁ!"). Ngựa cùng đội đứng chung ô được. Không cần tung đúng số để về đích.
+5. **Tung thêm lượt:** tung 6, đá được ngựa, hoặc đưa ngựa về đích → cùng người đó tung tiếp (tối đa 2 lần liên tiếp).
+6. **Thắng:** đội đầu tiên có đủ số ngựa về đích (mặc định **1**, chọn 1-3 hoặc tất cả khi tạo phòng) thắng. Tay tối đa 5 thẻ.
+7. Ngựa đi qua mỗi chặng sẽ bật một **mốc lịch sử** (1858, 1911, 1920, 1925, 1929) lấy từ chương.
 
 ### 10 thẻ kỹ năng (26 thẻ trong bộ bài)
 
@@ -18,8 +21,8 @@ Game cá ngựa **tối đa 6 người chơi, mỗi người một con ngựa** 
 |---|---|---|---|
 | ✂️ Chia Để Trị ×3 | Chặn đối thủ | Đội bị chọn **mất lượt** kế tiếp | Pháp chia ba kỳ |
 | 🚧 Thuế Khóa Nặng Nề ×3 | Chặn đối thủ | Lần đi kế tiếp của đối thủ **tối đa 2 bước** | Thuế khóa, bóc lột |
-| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Lùi 4 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
-| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** với một ngựa (cả hai trên vòng đua) | Đổi thay khi có đường lối đúng |
+| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Ngựa đang dẫn đầu của đội đó lùi 4 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
+| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** ngựa đang chơi của bạn với ngựa dẫn đầu của đội đó (cả hai trên vòng đua) | Đổi thay khi có đường lối đúng |
 | 🕵️ Mua Chuộc ×2 | Chặn đối thủ | **Lấy ngẫu nhiên 1 thẻ** trên tay đối thủ | Sarraut mua chuộc Nguyễn Ái Quốc |
 | 🚩 Đường Cách Mệnh ×3 | Tự thân | Lần đi kế tiếp **+3 bước** | Tác phẩm *Đường cách mệnh* |
 | 🎲 Nhãn Quan Sắc Bén ×2 | Tự thân | Đổ 2 xúc xắc, lấy số cao | Nhãn quan chính trị sắc bén |
@@ -27,11 +30,11 @@ Game cá ngựa **tối đa 6 người chơi, mỗi người một con ngựa** 
 | 💡 Soi Sáng ×3 | Hỗ trợ khi trả lời | Mở gợi ý | |
 | 🎯 Thu Hẹp Vòng Vây ×2 | Hỗ trợ khi trả lời | Loại 2 đáp án sai | |
 
-Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
+Thẻ nhắm vào **đội** đối thủ. Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
 
 **Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ người điều khiển phòng** xem được (API trả 403 với người khác). Trong phòng có liên kết “Thẻ & câu hỏi”.
 
-**Giao diện 2.5D (chỉ tối ưu cho laptop/PC, không có bố cục điện thoại):** bàn cờ 6 vùng màu như bàn cá ngựa thật, nghiêng trên nền trời (CSS perspective), ô gạch kem, đường về nhà đánh số 1-4, quân ngựa hình đầu ngựa đứng thẳng và nhảy khi đến lượt; thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
+**Giao diện 2.5D (chỉ tối ưu cho laptop/PC, không có bố cục điện thoại):** bàn diorama bãi cỏ nghiêng trên nền trời (CSS perspective) với bản đồ 6 cánh, ô gạch kem, ô xuất phát ★ màu đội, đường về nhà đánh số, chuồng ngựa, cây cối đứng thẳng; quân ngựa hình đầu ngựa nhảy khi đến lượt, bị đá thì bay về chuồng kèm chữ “ĐÁ!” và rung bàn; xúc xắc ở giữa bàn; bàn thẻ dưới bàn cờ (bộ bài, thẻ vừa dùng, luật xuất chuồng); thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
 
 ## Kiến trúc: Next.js (giao diện) + NestJS (backend)
 

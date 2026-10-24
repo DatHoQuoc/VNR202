@@ -1,8 +1,9 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import type { GameOptions } from '../../../src/game/engine';
 import { QUESTION_BANK } from '../../../src/game/questions';
 import {
   claimSlot, createRoom, getRoom, projectRoom, runCommand, viewerFor,
-  type LobbyTeam, type RoomCommand, type RoomMap, type RoomRecord, type Viewer
+  type LobbyPlayer, type RoomCommand, type RoomMap, type RoomRecord, type Viewer
 } from '../../../src/shared/room-core';
 
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -29,9 +30,12 @@ export class RoomsService implements OnModuleDestroy {
     try { return fn(); } catch (e) { throw new BadRequestException(e instanceof Error ? e.message : 'Yêu cầu không hợp lệ.'); }
   }
 
-  create(title: string, questionSeconds: number): RoomRecord {
-    const ok = Number.isFinite(questionSeconds) && questionSeconds >= 10 && questionSeconds <= 90;
-    return createRoom(this.rooms, title, ok ? { questionMs: questionSeconds * 1000 } : {});
+  create(title: string, questionSeconds: number, winHome: number, exitRule?: string): RoomRecord {
+    const options: GameOptions = {};
+    if (Number.isFinite(questionSeconds) && questionSeconds >= 10 && questionSeconds <= 90) options.questionMs = questionSeconds * 1000;
+    if (Number.isInteger(winHome) && winHome >= 1 && winHome <= 6) options.winHome = winHome;
+    options.exitRolls = exitRule === 'six' ? [6] : [1, 6];
+    return createRoom(this.rooms, title, options);
   }
 
   find(code: string): RoomRecord {
@@ -45,11 +49,11 @@ export class RoomsService implements OnModuleDestroy {
     return projectRoom(room, viewerFor(room, hostToken, teamToken));
   }
 
-  join(code: string, name: string, slot: number | undefined, teamToken?: string): { team: LobbyTeam; view: ReturnType<typeof projectRoom> } {
+  join(code: string, name: string, slot: number | undefined, teamToken?: string): { player: LobbyPlayer; view: ReturnType<typeof projectRoom> } {
     const room = this.find(code);
-    const existing = teamToken ? room.teams.find((x) => x.token === teamToken) : undefined;
-    const team = this.guard(() => claimSlot(room, name, slot, existing));
-    return { team, view: projectRoom(room, viewerFor(room, undefined, team.token)) };
+    const existing = teamToken ? room.players.find((x) => x.token === teamToken) : undefined;
+    const player = this.guard(() => claimSlot(room, name, slot, existing));
+    return { player, view: projectRoom(room, viewerFor(room, undefined, player.token)) };
   }
 
   /** Questions with answers: host only, so players cannot read the answers before the game. */

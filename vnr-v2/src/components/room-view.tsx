@@ -1,16 +1,17 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { Board, COLOR_HEX, HorseIcon, type BoardHorse } from './board';
+import { Board, COLOR_HEX, HorseIcon, positionOf, type BoardFx, type BoardTeam } from './board';
 import { useClock, useRoom, type RoomView as View } from './client';
+import { RING_MAX } from '@/game/engine';
 import { skillByKind } from '@/game/skills';
-import { COLOR_NAMES, TEAM_COLORS, type SkillCard, type SkillKind } from '@/game/types';
-import type { CSSProperties } from 'react';
+import { type SkillCard, type SkillKind } from '@/game/types';
 
 type Game = NonNullable<View['game']>;
+type TeamView = View['teams'][number];
 const LETTERS = ['A', 'B', 'C', 'D'];
 
-function Die({ value, rolling }: { value: number | null; rolling: boolean }) {
+export function Die({ value, rolling }: { value: number | null; rolling: boolean }) {
   const pips: Record<number, number[]> = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
   return (
     <div className={`die${rolling ? ' rolling' : ''}`} aria-label={value ? `Xúc xắc ${value}` : 'Chưa đổ'}>
@@ -23,13 +24,13 @@ function useRolling(dice: number | null): boolean {
   const [rolling, setRolling] = useState(false);
   const last = useRef<number | null>(null);
   useEffect(() => {
-    if (dice !== null && dice !== last.current) { setRolling(true); const t = setTimeout(() => setRolling(false), 700); last.current = dice; return () => clearTimeout(t); }
+    if (dice !== null && dice !== last.current) { setRolling(true); const t = setTimeout(() => setRolling(false), 800); last.current = dice; return () => clearTimeout(t); }
     if (dice === null) last.current = null;
   }, [dice]);
   return rolling;
 }
 
-export function SkillCardView({ card, kind, disabledReason, onUse, selected, big, style }: { card?: SkillCard; kind?: SkillKind; disabledReason?: string | null; onUse?: () => void; selected?: boolean; big?: boolean; style?: React.CSSProperties }) {
+export function SkillCardView({ card, kind, disabledReason, onUse, selected, big, style }: { card?: SkillCard; kind?: SkillKind; disabledReason?: string | null; onUse?: () => void; selected?: boolean; big?: boolean; style?: CSSProperties }) {
   const def = skillByKind[(card?.kind ?? kind)!];
   const tone = def.target === 'enemy' ? 'enemy' : def.timing === 'question' ? 'help' : 'self';
   const label = def.target === 'enemy' ? 'CHẶN ĐỐI THỦ' : def.timing === 'question' ? 'HỖ TRỢ' : 'TỰ THÂN';
@@ -49,128 +50,178 @@ export function RoomView({ code, projector = false }: { code: string; projector?
   const { view, error, busy, send, join, serverNow } = useRoom(code);
   const [pending, setPending] = useState<SkillCard | null>(null);
   const [playerName, setPlayerName] = useState('');
+  const [fx, setFx] = useState<BoardFx | null>(null);
+  const seenResolution = useRef<number | null | undefined>(undefined);
   useEffect(() => { try { setPlayerName(localStorage.getItem('vnr_player') ?? ''); } catch { /* storage unavailable */ } }, []);
   const rename = (v: string) => { setPlayerName(v); try { localStorage.setItem('vnr_player', v); } catch { /* ignore */ } };
   useClock();
   const rolling = useRolling(view?.game?.dice ?? null);
 
-  const names = useMemo(() => Object.fromEntries((view?.teams ?? []).map((t) => [t.id, t])), [view?.teams]);
+  // Kick effect: play once per new resolution (never for the one already on screen at load).
+  const res = view?.game?.resolution ?? null;
+  useEffect(() => {
+    if (!view?.game) return;
+    if (seenResolution.current === undefined) { seenResolution.current = res?.id ?? null; return; }
+    if (!res || res.id === seenResolution.current) return;
+    seenResolution.current = res.id;
+    const team = view.game.players[res.teamId];
+    const idx = Math.max(0, team.members.findIndex((m) => m.id === res.memberId));
+    setFx({ id: res.id, kicked: res.kicked.map((k) => k.horseId), at: res.kicked.length ? positionOf(team.seat, res.to, idx, view.game.finish) : null });
+    const t = setTimeout(() => setFx(null), 2200);
+    return () => clearTimeout(t);
+  }, [res, view?.game]);
+
+  const teamsById = useMemo(() => Object.fromEntries((view?.teams ?? []).map((t) => [t.id, t])), [view?.teams]);
   if (!view) return <main className="center-note">{error ? <><p className="error">{error}</p><Link className="btn" href="/">Về trang chủ</Link></> : 'Đang kết nối phòng…'}</main>;
 
   const g = view.game;
-  const me = view.viewer.role === 'team' ? view.viewer.teamId : null;
+  const meTeam = view.viewer.role === 'team' ? view.viewer.teamId : null;
+  const meId = view.viewer.role === 'team' ? view.viewer.playerId : null;
   const isHost = view.viewer.role === 'host' && !projector;
-  const name = (id?: string) => (id ? names[id]?.name ?? '?' : '');
-  const tint = (id?: string) => (id && names[id] ? COLOR_HEX[names[id].color] : '#555');
+  const teamName = (id?: string) => (id ? teamsById[id]?.name ?? '?' : '');
+  const tint = (id?: string) => (id && teamsById[id] ? COLOR_HEX[teamsById[id].color] : '#555');
   const link = typeof window === 'undefined' ? '' : `${window.location.origin}/join?code=${view.code}`;
+  const exitText = view.settings.exitRolls.join(' hoặc ');
 
-  const horses: BoardHorse[] = g
-    ? g.order.map((id) => ({
-        teamId: id, seat: g.players[id].seat, name: name(id), color: names[id].color, progress: g.players[id].progress,
-        active: g.turnTeamId === id && g.phase !== 'finished', shield: g.players[id].shield, stunned: g.players[id].stunned
-      }))
-    : view.teams.map((t) => ({ teamId: t.id, seat: t.slot, name: t.name, color: t.color, progress: 0, active: false, shield: false, stunned: false }));
-
-  const remaining = g && (g.paused ? g.pausedRemaining : g.deadline !== null ? Math.max(0, g.deadline - serverNow()) : null);
   const run = (action: Parameters<typeof send>[0]) => { setPending(null); void send(action); };
-  const myTurn = !!g && me === g.turnTeamId && g.phase !== 'finished' && !g.paused;
 
   const header = (
     <header className="topbar">
       <Link href="/" className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</Link>
       <div className="topbar-mid"><strong>{view.title}</strong><span>Mã phòng <b className="code">{view.code}</b></span></div>
       <div className="topbar-end">
-        {me && <span className="chip" style={{ background: tint(me) }}>{name(me)}</span>}
+        {meTeam && <span className="chip" style={{ background: tint(meTeam) }}>{teamName(meTeam)}</span>}
         {isHost && <span className="chip dark">Người điều khiển</span>}
-        {!me && !isHost && <span className="chip dark">Khán giả</span>}
+        {!meTeam && !isHost && <span className="chip dark">Khán giả</span>}
         {!projector && <Link className="text-link" href={`/rooms/${view.code}/board`} target="_blank">Màn chiếu ↗</Link>}
         <Link className="text-link" href={isHost ? `/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>
       </div>
     </header>
   );
 
+  /* ------------------------------------------------------------------ lobby */
   if (view.status === 'lobby' || !g) {
-    const mySlot = view.teams.find((x) => x.id === me)?.slot ?? null;
+    const mine = view.teams.find((t) => t.members.some((m) => m.id === meId));
     const canPick = view.viewer.role !== 'host' && !projector;
+    const filled = view.teams.filter((t) => t.members.length > 0).length;
+    const boardTeams: BoardTeam[] = view.teams.map((t) => ({
+      teamId: t.id, seat: t.slot, color: t.color, name: t.name, handCount: 0, active: false, shield: false, stunned: false,
+      horses: t.members.map((m, i) => ({ id: `h-${m.id}`, name: m.name, progress: 0, memberIdx: i, acting: false }))
+    })).filter((t) => t.horses.length > 0);
     return (
       <>{header}
         <main className="shell lobby">
           <section className="panel">
-            <p className="eyebrow">PHÒNG CHỜ · {view.teams.length}/6 NGƯỜI CHƠI</p>
-            <h1>Chọn ngựa của bạn</h1>
-            <p className="muted">Mã phòng <b className="code">{view.code}</b>. Mỗi người điều khiển <b>một con ngựa</b>, từ ngựa số 1 đến số 6. Cần ít nhất 2 người để bắt đầu.</p>
+            <p className="eyebrow">PHÒNG CHỜ · {view.teams.reduce((n, t) => n + t.members.length, 0)} NGƯỜI · {filled}/6 ĐỘI</p>
+            <h1>Chọn đội của bạn</h1>
+            <p className="muted">Mã phòng <b className="code">{view.code}</b>. Có 6 đội (màu cố định). <b>Mỗi người vào đội sẽ có một con ngựa riêng</b>, tối đa 6 người mỗi đội. Cần ít nhất 2 đội có người để bắt đầu.</p>
+            <div className="rule-chips">
+              <span>🐴 Tung <b>{exitText}</b> để xuất chuồng</span>
+              <span>🏁 Đội có <b>{view.settings.winHome}</b> ngựa về đích trước thắng</span>
+              <span>🎲 Tung 6, đá ngựa hoặc về đích: tung thêm lượt</span>
+            </div>
             {canPick && (
               <label className="field">Tên của bạn
                 <input value={playerName} maxLength={24} onChange={(e) => rename(e.target.value)} placeholder="Ví dụ: Nguyễn An" />
               </label>
             )}
             <div className="slots">
-              {TEAM_COLORS.map((color, slot) => {
-                const owner = view.teams.find((x) => x.slot === slot);
-                const mine = owner?.id === me;
+              {view.teams.map((t: TeamView) => {
+                const isMine = mine?.id === t.id;
                 return (
-                  <div key={slot} className={`slot${owner ? ' taken' : ''}${mine ? ' mine' : ''}`} style={{ '--c': COLOR_HEX[color] } as CSSProperties}>
-                    <div className="slot-horse"><HorseIcon /></div>
-                    <div className="slot-info">
-                      <b>Ngựa số {slot + 1} · {COLOR_NAMES[color]}</b>
-                      <span>{owner ? <>{owner.name}{mine ? ' (bạn)' : ''}</> : <i>Còn trống</i>}</span>
-                    </div>
+                  <div key={t.id} className={`slot${t.members.length ? ' taken' : ''}${isMine ? ' mine' : ''}`} style={{ '--c': COLOR_HEX[t.color] } as CSSProperties}>
+                    <div className="slot-head"><span className="slot-horse"><HorseIcon /></span><b>Đội {t.slot + 1} · {t.name.replace('Đội ', '')}</b><span className="muted small">{t.members.length}/6 ngựa</span></div>
+                    <ul className="slot-members">
+                      {t.members.map((m) => (
+                        <li key={m.id}><i className={m.online ? 'on' : ''} />{m.name}{m.id === meId ? ' (bạn)' : ''}
+                          {isHost && <button className="text-link" onClick={() => run({ type: 'remove-player', playerId: m.id })}>Xóa</button>}</li>
+                      ))}
+                      {t.members.length === 0 && <li className="muted"><i />Chưa có ai</li>}
+                    </ul>
                     <div className="slot-actions">
-                      {!owner && canPick && <button className="btn primary" disabled={busy || playerName.trim().length < 2} onClick={() => join(playerName, slot)}>{mySlot === null ? 'Chọn ngựa này' : 'Đổi sang ngựa này'}</button>}
-                      {mine && <button className="text-link" onClick={() => run({ type: 'leave' })}>Rời ngựa</button>}
-                      {owner && isHost && <button className="text-link" onClick={() => run({ type: 'remove-team', teamId: owner.id })}>Xóa</button>}
+                      {canPick && !isMine && t.members.length < 6 && <button className="btn primary" disabled={busy || playerName.trim().length < 2} onClick={() => join(playerName, t.slot)}>{mine ? 'Chuyển sang đội này' : 'Vào đội này'}</button>}
+                      {isMine && <button className="text-link" onClick={() => run({ type: 'leave' })}>Rời đội</button>}
                     </div>
                   </div>
                 );
               })}
             </div>
-            {canPick && playerName.trim().length < 2 && mySlot === null && <p className="notice">Nhập tên của bạn rồi bấm “Chọn ngựa này” ở một ô còn trống.</p>}
-            {mySlot !== null && <p className="notice">Bạn đang giữ ngựa số {mySlot + 1}. Có thể đổi sang ô trống khác trước khi bắt đầu; hãy giữ nguyên trang này.</p>}
-            {isHost && <button className="btn primary big" disabled={busy || view.teams.length < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({view.teams.length} người)</button>}
+            {canPick && playerName.trim().length < 2 && !mine && <p className="notice">Nhập tên của bạn rồi bấm “Vào đội này”.</p>}
+            {mine && <p className="notice">Bạn đang ở {mine.name}. Có thể chuyển sang đội khác trước khi bắt đầu; hãy giữ nguyên trang này.</p>}
+            {isHost && <button className="btn primary big" disabled={busy || filled < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({filled} đội)</button>}
             {isHost && <input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />}
           </section>
-          <section className="panel board-wrap"><Board horses={horses} /></section>
+          <section className="panel board-wrap"><Board teams={boardTeams} /></section>
           {error && <p className="toast error">{error}</p>}
         </main>
       </>
     );
   }
 
+  /* ------------------------------------------------------------------ game */
   const turnTeam = g.turnTeamId;
+  const turn = g.players[turnTeam];
+  const actor = turn.members.find((m) => m.id === g.actingMemberId);
+  const actorHorse = turn.horses.find((h) => h.memberId === g.actingMemberId);
+  const myTurn = !!meId && meId === g.actingMemberId && g.phase !== 'finished' && !g.paused;
   const q = g.question;
-  const mine = me ? g.players[me] : null;
   const hand = view.hand;
-  const enemyCards = (card: SkillCard) => skillByKind[card.kind].target === 'enemy';
+  const mineTeam = meTeam ? g.players[meTeam] : null;
+  const remaining = g.paused ? g.pausedRemaining : g.deadline !== null ? Math.max(0, g.deadline - serverNow()) : null;
+  const secs = remaining === null ? null : Math.ceil(remaining / 1000);
+
+  const boardTeams: BoardTeam[] = g.order.map((id) => {
+    const p = g.players[id];
+    return {
+      teamId: id, seat: p.seat, color: teamsById[id].color, name: teamName(id), handCount: p.handCount,
+      active: id === turnTeam && g.phase !== 'finished', shield: p.shield, stunned: p.stunned,
+      horses: p.horses.map((h) => ({ id: h.id, name: h.name, progress: h.progress, memberIdx: p.members.findIndex((m) => m.id === h.memberId), acting: h.memberId === g.actingMemberId }))
+    };
+  });
 
   const reason = (card: SkillCard): string | null => {
     const def = skillByKind[card.kind];
-    if (!myTurn) return g.paused ? 'Ván đấu đang tạm dừng' : 'Chưa đến lượt của đội bạn';
+    if (!myTurn) return g.paused ? 'Ván đấu đang tạm dừng' : 'Chưa đến lượt của bạn';
     if (def.timing === 'roll' && g.phase !== 'roll') return 'Chỉ dùng trước khi đổ xúc xắc';
     if (def.timing === 'roll' && g.skillUsed) return 'Mỗi lượt chỉ dùng 1 thẻ trước khi đổ';
     if (def.timing === 'question' && g.phase !== 'question') return 'Chỉ dùng khi đang trả lời câu hỏi';
     return null;
   };
-  const use = (card: SkillCard) => (enemyCards(card) ? setPending(pending?.id === card.id ? null : card) : run({ type: 'game', action: { type: 'play-skill', cardId: card.id } }));
+  const use = (card: SkillCard) => (skillByKind[card.kind].target === 'enemy' ? setPending(pending?.id === card.id ? null : card) : run({ type: 'game', action: { type: 'play-skill', cardId: card.id } }));
   const targetOk = (card: SkillCard, id: string): string | null => {
     const t = g.players[id];
-    const onRing = (p: number) => p >= 1 && p <= 23;
+    const ring = t.horses.filter((h) => h.progress >= 1 && h.progress <= RING_MAX);
     if (card.kind === 'stun' && t.stunned) return 'Đã bị mất lượt';
     if (card.kind === 'barricade' && t.cap !== null) return 'Đã bị Thuế Khóa';
-    if (card.kind === 'push-back' && !onRing(t.progress)) return 'Không nằm trên vòng đua';
-    if (card.kind === 'swap' && (!onRing(t.progress) || !mine || !onRing(mine.progress) || t.progress === mine.progress)) return 'Không hoán đổi được';
+    if (card.kind === 'push-back' && !ring.length) return 'Không có ngựa trên vòng đua';
+    if (card.kind === 'swap') {
+      const mine = actorHorse && actorHorse.progress >= 1 && actorHorse.progress <= RING_MAX;
+      if (!ring.length || !mine) return 'Cần cả hai ngựa trên vòng đua';
+    }
     if (card.kind === 'steal' && t.handCount === 0) return 'Chưa có thẻ nào';
     return null;
   };
 
-  const res = g.resolution;
-  const secs = remaining === null ? null : Math.ceil(remaining / 1000);
+  const lastSkill = g.lastSkill;
+  const standings = [...g.order].sort((a, b) => g.players[b].home - g.players[a].home || g.players[b].lead - g.players[a].lead);
 
   return (
     <>{header}
       <main className={`shell game${projector ? ' projector' : ''}`}>
         <section className="left">
           <div className="panel board-wrap">
-            <Board horses={horses} finish={g.finish} />
+            <Board teams={boardTeams} fx={fx} finish={g.finish} center={<Die value={g.dice} rolling={rolling} />} />
+            <div className="tray">
+              <div className="tray-slot"><span className="tray-label">BỘ BÀI</span><div className="deck-pile">{Array.from({ length: Math.min(4, Math.ceil(g.deckCount / 6)) }, (_, i) => <i key={i} className="card-back" style={{ '--i': i } as CSSProperties} />)}</div><small>{g.deckCount} lá</small></div>
+              <div className="tray-slot wide">
+                <span className="tray-label">THẺ VỪA DÙNG</span>
+                {lastSkill ? (
+                  <div key={lastSkill.id} className="played"><SkillCardView kind={lastSkill.kind} style={{ '--rot': '0deg', '--lift': '0px' } as CSSProperties} />
+                    <small><b style={{ color: tint(lastSkill.teamId) }}>{teamName(lastSkill.teamId)}</b>{lastSkill.targetId ? <> → <b style={{ color: tint(lastSkill.targetId) }}>{teamName(lastSkill.targetId)}</b></> : null}{lastSkill.blocked ? ' (bị khiên chặn)' : ''}</small></div>
+                ) : <small className="muted">Chưa có thẻ nào được dùng</small>}
+              </div>
+              <div className="tray-slot"><span className="tray-label">XUẤT CHUỒNG</span><b className="exit-rule">🎲 {g.exitRolls.join(' / ')}</b><small>Về đích: {g.winHome} ngựa</small></div>
+            </div>
           </div>
         </section>
 
@@ -178,10 +229,10 @@ export function RoomView({ code, projector = false }: { code: string; projector?
           {g.phase === 'finished' ? (
             <div className="panel winner" style={{ borderColor: tint(g.winnerId ?? undefined) }}>
               <p className="eyebrow">{g.endedBy === 'finish' ? 'VỀ ĐÍCH ĐẦU TIÊN' : 'VÁN ĐẤU KẾT THÚC'}</p>
-              <h1 style={{ color: tint(g.winnerId ?? undefined) }}>🏆 {name(g.winnerId ?? undefined)}</h1>
+              <h1 style={{ color: tint(g.winnerId ?? undefined) }}>🏆 {teamName(g.winnerId ?? undefined)}</h1>
               <ol className="rank">
                 {g.ranking!.map((id, i) => (
-                  <li key={id}><b>{i + 1}</b><i style={{ background: tint(id) }} />{name(id)}<span>{g.players[id].progress}/{g.finish} ô · đúng {g.players[id].correct}/{g.players[id].answered}</span></li>
+                  <li key={id}><b>{i + 1}</b><i style={{ background: tint(id) }} />{teamName(id)}<span>{g.players[id].home}/{Math.min(g.winHome, g.players[id].horses.length)} ngựa về đích · đúng {g.players[id].correct}/{g.players[id].answered}</span></li>
                 ))}
               </ol>
               {isHost && <button className="btn primary" onClick={() => run({ type: 'rematch' })}>Chơi ván mới với các đội này</button>}
@@ -189,15 +240,17 @@ export function RoomView({ code, projector = false }: { code: string; projector?
           ) : (
             <div className={`panel turn${myTurn ? ' mine' : ''}`} style={{ borderColor: tint(turnTeam) }}>
               <div className="turn-head">
-                <div><p className="eyebrow">LƯỢT {g.turnNumber} · {g.phase === 'roll' ? 'ĐỔ XÚC XẮC' : 'TRẢ LỜI CÂU HỎI'}</p>
-                  <h2 style={{ color: tint(turnTeam) }}>{myTurn ? 'Đến lượt bạn!' : `Lượt của ${name(turnTeam)}`}</h2></div>
-                <Die value={g.dice} rolling={rolling} />
+                <div><p className="eyebrow">LƯỢT {g.turnNumber}{g.streak > 0 ? ` · TUNG THÊM ×${g.streak}` : ''} · {g.phase === 'roll' ? 'ĐỔ XÚC XẮC' : 'TRẢ LỜI CÂU HỎI'}</p>
+                  <h2 style={{ color: tint(turnTeam) }}>{myTurn ? 'Đến lượt bạn!' : `${teamName(turnTeam)} · ${actor?.name}`}</h2></div>
                 {secs !== null && <div className={`timer${secs <= 5 ? ' low' : ''}`}>{g.paused ? '⏸' : ''}{secs}s</div>}
               </div>
+              {actorHorse && actorHorse.progress === 0 && g.phase === 'roll' && (
+                <p className="hint">🐴 Ngựa {myTurn ? 'của bạn' : `của ${actor?.name}`} đang ở chuồng: cần tung <b>{exitText}</b> để xuất chuồng (vẫn được trả lời để nhận thẻ).</p>
+              )}
               {g.phase === 'roll' && (
                 myTurn
                   ? <button className="btn primary big" disabled={busy} onClick={() => run({ type: 'game', action: { type: 'roll' } })}>🎲 Đổ xúc xắc</button>
-                  : <p className="muted">Chờ {name(turnTeam)} đổ xúc xắc…</p>
+                  : <p className="muted">Chờ {actor?.name} ({teamName(turnTeam)}) đổ xúc xắc…</p>
               )}
               {g.phase === 'question' && q && (
                 <div className="question">
@@ -210,27 +263,27 @@ export function RoomView({ code, projector = false }: { code: string; projector?
                     ))}
                   </div>
                   {q.hint && <p className="hint">💡 Gợi ý: {q.hint}</p>}
-                  <p className="muted small">Trả lời đúng: đi {g.dice} ô <b>và nhận 1 thẻ kỹ năng</b>. Sai hoặc hết giờ: vẫn đi {g.dice} ô nhưng không có thẻ.</p>
+                  <p className="muted small">Đúng: nhận <b>1 thẻ kỹ năng</b>. Sai hoặc hết giờ: không có thẻ, ngựa vẫn đi theo số xúc xắc ({g.dice}).</p>
                 </div>
               )}
               {g.paused && <p className="notice">Ván đấu đang tạm dừng.</p>}
             </div>
           )}
 
-          {mine && g.phase !== 'finished' && (
+          {mineTeam && g.phase !== 'finished' && (
             <div className="panel hand">
-              <div className="panel-head"><h2>Thẻ kỹ năng của bạn ({hand.length}/5)</h2>
-                <div className="status-icons">{mine.shield && <span title="Có khiên">🛡️ Khiên</span>}{mine.boost > 0 && <span>🚩 +{mine.boost}</span>}{mine.doubleDice && <span>🎲 x2</span>}{mine.cap !== null && <span>🚧 tối đa {mine.cap}</span>}{mine.stunned && <span>💤 mất lượt</span>}</div></div>
-              {hand.length === 0 ? <p className="muted">Chưa có thẻ. Trả lời đúng để nhận thẻ kỹ năng mới.</p> : (
-                <div className="hand-fan">{hand.map((c, i) => { const off = i - (hand.length - 1) / 2; return <SkillCardView key={c.id} card={c} disabledReason={reason(c)} selected={pending?.id === c.id} onUse={() => use(c)} style={{ '--rot': `${off * 4}deg`, '--lift': `${Math.abs(off) * 7}px` } as React.CSSProperties} />; })}</div>
+              <div className="panel-head"><h2>Thẻ kỹ năng của đội ({hand.length}/5)</h2>
+                <div className="status-icons">{mineTeam.shield && <span>🛡️ Khiên</span>}{mineTeam.boost > 0 && <span>🚩 +{mineTeam.boost}</span>}{mineTeam.doubleDice && <span>🎲 x2</span>}{mineTeam.cap !== null && <span>🚧 tối đa {mineTeam.cap}</span>}{mineTeam.stunned && <span>💤 mất lượt</span>}</div></div>
+              {hand.length === 0 ? <p className="muted">Chưa có thẻ. Trả lời đúng để đội nhận thẻ kỹ năng mới.</p> : (
+                <div className="hand-fan">{hand.map((c, i) => { const off = i - (hand.length - 1) / 2; return <SkillCardView key={c.id} card={c} disabledReason={reason(c)} selected={pending?.id === c.id} onUse={() => use(c)} style={{ '--rot': `${off * 4}deg`, '--lift': `${Math.abs(off) * 7}px` } as CSSProperties} />; })}</div>
               )}
               {pending && (
                 <div className="targets">
                   <p>Chọn đội để dùng <b>{skillByKind[pending.kind].name}</b>:</p>
-                  {g.order.filter((id) => id !== me).map((id) => {
+                  {g.order.filter((id) => id !== meTeam).map((id) => {
                     const bad = targetOk(pending, id);
                     return <button key={id} className="target" disabled={!!bad || busy} title={bad ?? ''} style={{ borderColor: tint(id) }} onClick={() => run({ type: 'game', action: { type: 'play-skill', cardId: pending.id, targetId: id } })}>
-                      <i style={{ background: tint(id) }} />{name(id)} <small>{g.players[id].progress}/{g.finish}{g.players[id].shield ? ' 🛡️' : ''}{bad ? ` · ${bad}` : ''}</small></button>;
+                      <i style={{ background: tint(id) }} />{teamName(id)} <small>{g.players[id].home}/{Math.min(g.winHome, g.players[id].horses.length)} về đích{g.players[id].shield ? ' · 🛡️' : ''}{bad ? ` · ${bad}` : ''}</small></button>;
                   })}
                   <button className="text-link" onClick={() => setPending(null)}>Hủy</button>
                 </div>
@@ -241,15 +294,43 @@ export function RoomView({ code, projector = false }: { code: string; projector?
           {res && (
             <div className={`panel result ${res.outcome}`}>
               <p className="eyebrow">KẾT QUẢ LƯỢT {res.id}</p>
-              <p><b style={{ color: tint(res.teamId) }}>{name(res.teamId)}</b> đổ <b>{res.dice}</b> → {res.outcome === 'correct' ? '✅ trả lời đúng' : res.outcome === 'wrong' ? '❌ trả lời sai' : '⌛ hết giờ'}, đi {res.steps} ô ({res.from} → {res.to}){res.capped ? ' · bị Thuế Khóa giới hạn' : ''}.
-                {res.gained && <> Nhận thẻ <b>{skillByKind[res.gained as SkillKind].icon} {skillByKind[res.gained as SkillKind].name}</b>.</>}
-                {res.knocked.length > 0 && <> Húc lùi {res.knocked.map(name).join(', ')}.</>}</p>
+              <p><b style={{ color: tint(res.teamId) }}>{res.memberName} ({teamName(res.teamId)})</b> đổ <b>{res.dice}</b> → {res.outcome === 'correct' ? '✅ trả lời đúng' : res.outcome === 'wrong' ? '❌ trả lời sai' : '⌛ hết giờ'}.{' '}
+                {res.exited ? 'Ngựa xuất chuồng! ' : res.steps > 0 ? `Ngựa đi ${res.steps} ô (${res.from} → ${res.to})${res.capped ? ', bị Thuế Khóa giới hạn' : ''}. ` : res.from === 0 ? `Ngựa chưa ra chuồng (cần ${exitText}). ` : ''}
+                {res.gained && <>Nhận thẻ <b>{skillByKind[res.gained as SkillKind].icon} {skillByKind[res.gained as SkillKind].name}</b>. </>}
+                {res.kicked.length > 0 && <b className="kick-text">ĐÁ ngựa của {res.kicked.map((k) => k.name).join(', ')}! </b>}
+                {res.bonus && g.phase !== 'finished' && 'Được tung thêm một lượt.'}</p>
               <p className="q-review"><b>Câu hỏi:</b> {res.questionText}<br /><b>Đáp án:</b> {res.correctText}<br /><span className="muted">{res.explain} ({res.ref})</span></p>
             </div>
           )}
 
-          <ScoreBoard game={g} names={names} me={me} />
-          <EventLog game={g} names={names} />
+          <div className="panel scores">
+            <h2>Bảng xếp hạng</h2>
+            {standings.map((id) => {
+              const p = g.players[id];
+              const need = Math.min(g.winHome, p.horses.length);
+              return (
+                <div key={id} className={`score${id === turnTeam ? ' turn' : ''}`}>
+                  <i style={{ background: tint(id) }} />
+                  <span className="score-name">{teamName(id)}{id === meTeam ? ' (đội bạn)' : ''}<small>{p.members.length} ngựa</small></span>
+                  <span className="bar"><span style={{ width: `${(p.lead / g.finish) * 100}%`, background: tint(id) }} /></span>
+                  <span className="score-num">🏁 {p.home}/{need}</span>
+                  <span className="score-meta"><span className="score-cards">{Array.from({ length: p.handCount }, (_, i) => <i key={i} className="card-back" />)}</span>{p.shield ? ' 🛡️' : ''}{p.stunned ? ' 💤' : ''}{p.cap !== null ? ' 🚧' : ''}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="panel log">
+            <h2>Diễn biến</h2>
+            <ul>
+              {[...g.events].reverse().slice(0, 14).map((e) => (
+                <li key={e.id} className={e.type === 'kick' ? 'kick' : ''}>
+                  {e.teamId && teamsById[e.teamId] ? <b style={{ color: tint(e.teamId) }}>{teamName(e.teamId)}</b> : null} {e.text}
+                  {e.targetId && teamsById[e.targetId] ? <> {e.type === 'kick' ? '→' : 'lên'} <b style={{ color: tint(e.targetId) }}>{teamName(e.targetId)}</b></> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {isHost && g.phase !== 'finished' && (
             <div className="panel host-controls">
@@ -261,43 +342,5 @@ export function RoomView({ code, projector = false }: { code: string; projector?
         {error && <p className="toast error" role="alert">{error}</p>}
       </main>
     </>
-  );
-}
-
-function ScoreBoard({ game, names, me }: { game: Game; names: Record<string, { name: string; color: keyof typeof COLOR_HEX; online: boolean }>; me: string | null }) {
-  const sorted = [...game.order].sort((a, b) => game.players[b].progress - game.players[a].progress);
-  return (
-    <div className="panel scores">
-      <h2>Bảng xếp hạng đường đua</h2>
-      {sorted.map((id) => {
-        const p = game.players[id];
-        return (
-          <div key={id} className={`score${id === game.turnTeamId ? ' turn' : ''}`}>
-            <i style={{ background: COLOR_HEX[names[id].color] }} />
-            <span className="score-name">{names[id].name}{id === me ? ' (bạn)' : ''}</span>
-            <span className="bar"><span style={{ width: `${(p.progress / game.finish) * 100}%`, background: COLOR_HEX[names[id].color] }} /></span>
-            <span className="score-num">{p.progress}/{game.finish}</span>
-            <span className="score-meta"><span className="score-cards">{Array.from({ length: p.handCount }, (_, i) => <i key={i} className="card-back" />)}</span>{p.shield ? ' 🛡️' : ''}{p.stunned ? ' 💤' : ''}{p.cap !== null ? ' 🚧' : ''}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function EventLog({ game, names }: { game: Game; names: Record<string, { name: string; color: keyof typeof COLOR_HEX }> }) {
-  const events = [...game.events].reverse().slice(0, 14);
-  return (
-    <div className="panel log">
-      <h2>Diễn biến</h2>
-      <ul>
-        {events.map((e) => (
-          <li key={e.id}>
-            {e.teamId && names[e.teamId] ? <b style={{ color: COLOR_HEX[names[e.teamId].color] }}>{names[e.teamId].name}</b> : null} {e.text}
-            {e.targetId && names[e.targetId] ? <> {e.type === 'block' ? 'của' : 'lên'} <b style={{ color: COLOR_HEX[names[e.targetId].color] }}>{names[e.targetId].name}</b></> : null}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

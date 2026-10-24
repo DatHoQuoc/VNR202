@@ -126,7 +126,7 @@ for i, (n, t, b) in enumerate(steps):
     text(s, x + 0.15, 1.8, 2, 0.8, n, 36, True, RGBColor(0xF7, 0xE7, 0xCF), font='Cambria')
     text(s, x + 0.15, 2.65, 2, 0.5, t, 17, True, RGBColor(255, 255, 255))
     text(s, x + 0.15, 3.2, 1.95, 1.2, b, 13, False, RGBColor(255, 255, 255))
-bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: vòng đua chung 24 ô + đường về nhà 4 ô an toàn; đáp xuống ô có ngựa đội khác (trừ ô ★) thì húc lùi 3 ô.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 2-6 người chơi, mỗi người một ngựa trên một laptop; màn chiếu riêng cho lớp; 20-30 người cùng xem.'], 15)
+bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: bản đồ 6 cánh, vòng đua chung 42 ô + đường về nhà 4 ô; mỗi người một ngựa, tung 1 hoặc 6 để xuất chuồng; đáp xuống ô có ngựa đội khác (trừ ô ★) thì ĐÁ ngựa đó về chuồng, được tung thêm lượt.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 6 đội, mỗi đội 1-6 người (mỗi người một ngựa, một laptop); màn chiếu riêng cho lớp; 20-30 người cùng chơi.'], 15)
 
 # 7 ------------------------------------------------------------------------
 s = slide('DEMO trực tiếp: một lượt chơi', 'Sản phẩm sáng tạo · Demo', 7,
@@ -165,7 +165,7 @@ bullets(s, 0.6, 4.6, 12, 2.2, ['“[Trích phản hồi 1]”:: → [Thay đổi
 s = slide('Nhật ký cải tiến sản phẩm: từ v1 đến v2', 'Quy trình thiết kế · 04_Product_Prototype_DevelopmentLog', 10,
           'PHÚT 08-10 · Thành viên 4. So sánh v1 và v2. Giải thích lý do chuyển từ đấu máu 2 đội sang cá ngựa 6 đội: lớp đông, cần cả lớp cùng tham gia và có tương tác chặn nhau. Liệt kê rõ phần AI hỗ trợ trong 07_AI_Declaration.')
 card(s, 0.6, 1.7, 5.9, 4.4, 'v1 · Đấu Trường Tri Thức', ['2 đội đấu trực tiếp, thanh máu (HP)', 'Thẻ câu hỏi, thẻ đáp án, 10 kỹ năng công / thủ', 'Bán kết + chung kết, chỉ 4 đội', 'Nội dung: Tư tưởng Hồ Chí Minh', 'Hạn chế: nhiều đội ngồi chờ lâu; khó cho lớp 20-30 người'], GOLD)
-card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 người đua cùng lúc trên một bàn cờ', 'Đúng → đi + nhận thẻ; sai → đi nhưng không thẻ', '10 thẻ kỹ năng: chặn đối thủ, tăng tốc, khiên, hỗ trợ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
+card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 đội, mỗi người một ngựa, đua trên bản đồ 6 cánh có chuồng', 'Xuất chuồng khi tung 1/6, đá ngựa về chuồng, tung thêm lượt', 'Đúng → nhận thẻ kỹ năng (10 loại) dùng chặn đối thủ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
 text(s, 0.6, 6.3, 12, 0.5, 'Giới hạn hiện tại: dữ liệu phòng lưu trong bộ nhớ (mất khi khởi động lại); hướng phát triển: Redis, WebSocket, thêm bộ câu hỏi các chương khác.', 13, False, MUTED)
 
 # 11 -----------------------------------------------------------------------

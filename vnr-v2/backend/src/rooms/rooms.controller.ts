@@ -34,9 +34,9 @@ export class RoomsController {
   }
 
   @Post()
-  create(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Body() body: { title?: string; questionSeconds?: number }) {
+  create(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Body() body: { title?: string; questionSeconds?: number; winHome?: number; exitRule?: string }) {
     this.requireJson(req);
-    const room = this.rooms.create(String(body?.title ?? ''), Number(body?.questionSeconds));
+    const room = this.rooms.create(String(body?.title ?? ''), Number(body?.questionSeconds), Number(body?.winHome), body?.exitRule);
     this.setCookie(req, res, `vnr_host_${room.code}`, room.hostToken);
     return { code: room.code };
   }
@@ -58,8 +58,8 @@ export class RoomsController {
   join(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Param('code') code: string, @Body() body: { name?: string; slot?: number }) {
     this.requireJson(req);
     const slot = body?.slot === undefined ? undefined : Number(body.slot);
-    const { team, view } = this.rooms.join(code, String(body?.name ?? ''), slot, this.tokens(req, code).team);
-    this.setCookie(req, res, `vnr_team_${view.code}`, team.token);
+    const { player, view } = this.rooms.join(code, String(body?.name ?? ''), slot, this.tokens(req, code).team);
+    this.setCookie(req, res, `vnr_team_${view.code}`, player.token);
     return view;
   }
 

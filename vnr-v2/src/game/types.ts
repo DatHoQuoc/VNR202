@@ -34,14 +34,22 @@ export interface ActiveQuestion {
   hintShown: boolean;
 }
 
+export interface Member { id: string; name: string }
+
+/** One horse per team member. progress: 0 = in the stable, 1..RING_MAX ring, then the home lane, FINISH = home. */
+export interface Horse { id: string; memberId: string; name: string; progress: number }
+
+/** A team (slot 1-6): shared hand of skill cards, one horse per member. */
 export interface PlayerState {
   teamId: string;
   seat: number;
-  /** 0 = in the stable, 1..RING_MAX on the shared ring, then the home lane, FINISH = home. */
-  progress: number;
+  members: Member[];
+  horses: Horse[];
+  /** Index into members of whoever acted last; the next turn goes to the following member. */
+  actingIdx: number;
   hand: SkillCard[];
   stunned: boolean;
-  /** Next move is limited to this many steps (Rào Chắn). */
+  /** Next move is limited to this many steps (Thuế Khóa). */
   cap: number | null;
   boost: number;
   doubleDice: boolean;
@@ -53,10 +61,18 @@ export interface PlayerState {
 export interface Resolution {
   id: number;
   teamId: string;
+  memberId: string;
+  memberName: string;
+  horseId: string;
   dice: number;
   steps: number;
   from: number;
   to: number;
+  /** The horse left the stable on this roll. */
+  exited: boolean;
+  /** Horses kicked back to their stable by this move. */
+  kicked: { horseId: string; teamId: string; name: string }[];
+  bonus: boolean;
   picked: number | null;
   outcome: 'correct' | 'wrong' | 'timeout';
   questionText: string;
@@ -64,7 +80,6 @@ export interface Resolution {
   explain: string;
   ref: string;
   gained: SkillKind | null;
-  knocked: string[];
   capped: boolean;
   boost: number;
 }
@@ -83,7 +98,13 @@ export interface GameState {
   finish: number;
   order: string[];
   turnTeamId: string;
+  actingMemberId: string;
   turnNumber: number;
+  /** Consecutive bonus rolls (6, a kick or a horse reaching home) taken by the acting member. */
+  streak: number;
+  winHome: number;
+  exitRolls: number[];
+  lastSkill: { id: number; kind: SkillKind; teamId: string; targetId?: string; blocked: boolean } | null;
   players: Record<string, PlayerState>;
   skillDeck: SkillCard[];
   skillDiscard: SkillCard[];

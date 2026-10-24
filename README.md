@@ -59,6 +59,9 @@ Static page served at `/play/` (source in `public/play/`, plain HTML/CSS/JS, no 
 | `POST /host/end` | |
 
 Public: `GET /health`, `GET /state`, `GET /wall` (approved reflections only).
+Projector (`/stage`, class-wide numbers only, never per-player data):
+- `GET /stage/rounds/:n` → `{n, phase, title, target, distribution, comparison, correctOption}`. **409** until round n is revealed (or if it was voided), **404** for an unknown round.
+- `GET /stage/finale` → same view as `state.finale` (hidden entries stay hidden). **409** before `announce/start`.
 
 ## Socket.IO events
 

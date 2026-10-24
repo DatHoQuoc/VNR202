@@ -429,6 +429,32 @@ export class GameService extends EventEmitter {
     };
   }
 
+  /**
+   * Public, projector-safe view of one revealed round: class-wide numbers only, never per-player data.
+   * 404 for an unknown round, 409 until the round is revealed (or when it was voided).
+   */
+  stageRound(n: number) {
+    const { r, c } = this.roundOf(n);
+    if (!this.isScored(r)) throw new ConflictException(r.voided ? `Round ${n} was voided` : `Round ${n} is not revealed yet`);
+    const res = r.result!;
+    return {
+      n,
+      phase: r.phase,
+      title: c.title,
+      target: c.step2.target,
+      distribution: res.distribution,
+      comparison: res.comparison ?? null,
+      correctOption: res.correctOption ?? null,
+    };
+  }
+
+  /** Same ranking view as `state.finale` (hidden entries stay hidden); 409 before the announcement. */
+  stageFinale() {
+    const finale = this.publicState().finale;
+    if (!finale) throw new ConflictException('The finale has not started yet');
+    return finale;
+  }
+
   /** Full detail for the host after a reveal (distribution + per-team scores). */
   hostRound(n: number) {
     const { r, c } = this.roundOf(n);

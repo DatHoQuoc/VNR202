@@ -1,0 +1,69 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { SKILLS } from '@/game/skills';
+
+export function Landing({ initialCode = '' }: { initialCode?: string }) {
+  const router = useRouter();
+  const [title, setTitle] = useState('Cá Ngựa Cách Mạng · Lớp VNR202');
+  const [seconds, setSeconds] = useState(30);
+  const [code, setCode] = useState(initialCode);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function create() {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, questionSeconds: seconds }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      router.push(`/rooms/${data.code}`);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Không tạo được phòng.'); setBusy(false); }
+  }
+
+  return (
+    <main className="shell landing">
+      <header className="topbar"><span className="brand"><span className="brand-mark">♞</span> CÁ NGỰA CÁCH MẠNG</span><span className="muted">VNR202 · Chương I · phiên bản 2</span></header>
+      <section className="hero">
+        <div>
+          <p className="eyebrow">LỊCH SỬ ĐẢNG CỘNG SẢN VIỆT NAM · ÔN TẬP THEO ĐỘI</p>
+          <h1>Đưa ngựa về đích <em>3/2/1930</em></h1>
+          <p className="lead">Sáu đội cùng đua trên một bàn cờ. Mỗi lượt đổ xúc xắc, trả lời một câu hỏi về sự ra đời của Đảng và Cương lĩnh chính trị đầu tiên. Đúng thì nhận <b>thẻ kỹ năng</b> để tăng tốc hoặc chặn đường đối thủ. Đội nào về đích trước sẽ thắng.</p>
+        </div>
+        <div className="stack">
+          <div className="panel stack">
+            <h2>Người điều khiển: tạo phòng</h2>
+            <label className="field">Tên phòng<input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} /></label>
+            <label className="field">Thời gian trả lời mỗi câu: <b>{seconds} giây</b><input type="range" min={15} max={60} step={5} value={seconds} onChange={(e) => setSeconds(Number(e.target.value))} /></label>
+            <button className="btn primary" disabled={busy} onClick={create}>Tạo phòng mới</button>
+          </div>
+          <form className="panel stack" onSubmit={(e) => { e.preventDefault(); router.push(`/rooms/${code.trim().toUpperCase()}`); }}>
+            <h2>Đội chơi: vào phòng</h2>
+            <label className="field">Mã phòng<input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={5} placeholder="VD: K7M2Q" /></label>
+            <button className="btn" disabled={code.trim().length < 5}>Tiếp tục</button>
+          </form>
+          {error && <p className="error">{error}</p>}
+        </div>
+      </section>
+
+      <section className="rules">
+        <div className="panel">
+          <h2>Luật chơi trong 30 giây</h2>
+          <ol>
+            <li><b>Đổ xúc xắc</b> → hệ thống ra 1 câu hỏi 4 đáp án (trích từ giáo trình).</li>
+            <li><b>Trả lời đúng</b>: ngựa đi đúng số ô và nhận <b>1 thẻ kỹ năng</b>. <b>Sai / hết giờ</b>: vẫn đi tiếp nhưng <b>không có thẻ</b>.</li>
+            <li>Trước khi đổ xúc xắc có thể dùng <b>1 thẻ</b>: tăng tốc cho mình hoặc <b>chặn đối thủ</b>. Thẻ trợ giúp (Soi Sáng, Thu Hẹp) dùng khi đang trả lời.</li>
+            <li>Đáp xuống ô có ngựa đội khác (trừ ô ★) sẽ <b>húc lùi 3 ô</b>. Vào đường về nhà là an toàn tuyệt đối.</li>
+            <li><b>Về đích trước thắng.</b> Mốc lịch sử xuất hiện khi ngựa đi qua mỗi chặng.</li>
+          </ol>
+        </div>
+        <div className="panel">
+          <h2>10 thẻ kỹ năng</h2>
+          <ul className="skill-legend">
+            {SKILLS.map((s) => <li key={s.kind}><span>{s.icon}</span><div><b>{s.name}</b> <small>×{s.copies}</small><br /><small>{s.description}</small></div></li>)}
+          </ul>
+        </div>
+      </section>
+    </main>
+  );
+}

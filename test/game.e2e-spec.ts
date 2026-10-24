@@ -170,6 +170,25 @@ describe('full session', () => {
     expect((await host('announce/next', 'POST')).status).toBe(409);
   });
 
+  it('rejoin returns own picks/guesses, past reveals and the reflected flag', async () => {
+    const id = P.t1p0.id;
+    const s = await connect();
+    const r = await ack(s, 'player:join', { code: 'ABCDE', playerId: id });
+    expect(r.ok).toBe(true);
+    expect(r.data.playerId).toBe(id);
+    const me = r.data.me;
+    expect(me.picks['1']).toBe('B');
+    expect(me.guesses['1']).toBe(25);
+    expect(Object.keys(me.reveals).sort()).toEqual(['1', '2', '3', '4']);
+    expect(me.reveals['1'].you).toMatchObject({ guess: 25, actual: 25, score: 100 });
+    expect(me.reveals['2'].comparison).toEqual({ x: 40, y: 100 });
+    expect(me.reflected).toBe(false);
+    // another player's data is not leaked
+    const other = await ack(await connect(), 'player:join', { code: 'ABCDE', playerId: P.t3p0.id });
+    expect(other.data.me.guesses['1']).toBe(70);
+    expect(other.data.me.picks['1']).toBe('A');
+  });
+
   it('reflection wall: anonymous, moderated, one per player', async () => {
     expect((await ack(P.t1p0.s, 'reflection:submit', { text: 'hi' })).ok).toBe(false); // closed
     await host('reflection/open', 'POST');
@@ -180,6 +199,16 @@ describe('full session', () => {
     expect(await (await fetch(`${base}/wall`)).json()).toEqual([]); // nothing approved yet
     const list = (await host('reflections')).body;
     expect(list[0]).not.toHaveProperty('playerId');
+    for (const ref of list) expect(Object.keys(ref).sort()).toEqual(['approved', 'createdAt', 'id', 'text']);
+    expect(JSON.stringify(list)).not.toContain(P.t1p0.id);
+
+    // reflected survives a reconnect, still without any link stored on the reflection
+    const again = await ack(await connect(), 'player:join', { code: 'ABCDE', playerId: P.t1p0.id });
+    expect(again.data.me.reflected).toBe(true);
+    const notYet = await ack(await connect(), 'player:join', { code: 'ABCDE', playerId: P.t1p1.id });
+    expect(notYet.data.me.reflected).toBe(false);
+    expect((await host('reflections')).body).toEqual(list);
+    expect(JSON.stringify((await host('results')).body.reflections)).not.toContain(P.t1p0.id);
     await host(`reflections/${list[0].id}/approve`, 'POST', { approved: true });
     expect(await (await fetch(`${base}/wall`)).json()).toHaveLength(1);
   });

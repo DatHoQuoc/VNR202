@@ -59,12 +59,15 @@ Public: `GET /health`, `GET /state`, `GET /wall` (approved reflections only).
 
 Client → server (each returns an ack `{ok, data}` or `{ok:false, error}`):
 
-- `player:join {code, name, team, playerId?}` → `{playerId, team, joinedRound, state}`. Store `playerId` in `localStorage` and send it again to rejoin after a dropped connection.
+- `player:join {code, name, team, playerId?}` → `{playerId, team, joinedRound, state, me}`. Store `playerId` in `localStorage` and send it again (with just `code` and `playerId`) to rejoin after a dropped connection. `me` rebuilds the player's screen on any join/rejoin:
+  - `picks`: `{[round]: option}` and `guesses`: `{[round]: value}` — this player's own answers
+  - `reveals`: `{[round]: payload}` — the `round:reveal` payload of every round already revealed
+  - `reflected`: whether this player already sent a reflection (kept in memory only, never linked to the stored reflection, so reflections stay anonymous; resets if the server restarts)
 - `answer:pick {round, option}`, `answer:guess {round, value}` (0–100; may be overwritten while the step is open)
 - `reflection:submit {text}` (one per player)
 - `host:join {key}` → then receives `host:stats`
 
-Server → client: `state` (public state to everyone), `round:reveal` (personal result: your guess, the real %, your score, class distribution, opening x→y comparison, correct option), `host:stats`.
+Server → client: `state` (public state to everyone), `round:reveal` (personal result, also available later in `me.reveals`: your guess, the real %, your score, class distribution, opening x→y comparison, correct option), `host:stats`.
 
 ## Rules implemented (and where they came from)
 

@@ -460,7 +460,10 @@
 
   function renderResults(st) {
     const revealed = st.rounds.filter((x) => x.n <= st.currentRound && x.phase === 'revealed').map((x) => x.n);
-    if (!revealed.includes(S.tab)) S.tab = revealed.length ? revealed[revealed.length - 1] : null;
+    // follow the newest reveal; the MC can still click back to an earlier round
+    const newest = revealed.length ? revealed[revealed.length - 1] : null;
+    if (newest !== S.newest) { S.newest = newest; S.tab = newest; }
+    if (!revealed.includes(S.tab)) S.tab = newest;
     const data = S.tab ? S.rounds[S.tab] : null;
     paint('results', [revealed, S.tab, data, S.labels, S.players.map((p) => [p.id, p.name, p.team])], () => {
       const tabs = $('res-tabs');

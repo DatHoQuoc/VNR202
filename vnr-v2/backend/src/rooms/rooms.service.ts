@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { QUESTION_BANK } from '../../../src/game/questions';
 import {
-  createRoom, getRoom, joinRoom, projectRoom, runCommand, viewerFor,
+  claimSlot, createRoom, getRoom, projectRoom, runCommand, viewerFor,
   type LobbyTeam, type RoomCommand, type RoomMap, type RoomRecord, type Viewer
 } from '../../../src/shared/room-core';
 
@@ -45,9 +45,10 @@ export class RoomsService implements OnModuleDestroy {
     return projectRoom(room, viewerFor(room, hostToken, teamToken));
   }
 
-  join(code: string, name: string, color?: string): { team: LobbyTeam; view: ReturnType<typeof projectRoom> } {
+  join(code: string, name: string, slot: number | undefined, teamToken?: string): { team: LobbyTeam; view: ReturnType<typeof projectRoom> } {
     const room = this.find(code);
-    const team = this.guard(() => joinRoom(room, name, color));
+    const existing = teamToken ? room.teams.find((x) => x.token === teamToken) : undefined;
+    const team = this.guard(() => claimSlot(room, name, slot, existing));
     return { team, view: projectRoom(room, viewerFor(room, undefined, team.token)) };
   }
 

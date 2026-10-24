@@ -28,7 +28,7 @@ export function Landing({ initialCode = '' }: { initialCode?: string }) {
         <div>
           <p className="eyebrow">LỊCH SỬ ĐẢNG CỘNG SẢN VIỆT NAM · ÔN TẬP THEO ĐỘI</p>
           <h1>Đưa ngựa về đích <em>3/2/1930</em></h1>
-          <p className="lead">Sáu đội cùng đua trên một bàn cờ. Mỗi lượt đổ xúc xắc, trả lời một câu hỏi về sự ra đời của Đảng và Cương lĩnh chính trị đầu tiên. Đúng thì nhận <b>thẻ kỹ năng</b> để tăng tốc hoặc chặn đường đối thủ. Đội nào về đích trước sẽ thắng.</p>
+          <p className="lead">Sáu người chơi, mỗi người điều khiển một con ngựa, cùng đua trên một bàn cờ. Mỗi lượt đổ xúc xắc, trả lời một câu hỏi về sự ra đời của Đảng và Cương lĩnh chính trị đầu tiên. Đúng thì nhận <b>thẻ kỹ năng</b> để tăng tốc hoặc chặn đường đối thủ. Đội nào về đích trước sẽ thắng.</p>
         </div>
         <div className="stack">
           <div className="panel stack">
@@ -38,7 +38,7 @@ export function Landing({ initialCode = '' }: { initialCode?: string }) {
             <button className="btn primary" disabled={busy} onClick={create}>Tạo phòng mới</button>
           </div>
           <form className="panel stack" onSubmit={(e) => { e.preventDefault(); router.push(`/rooms/${code.trim().toUpperCase()}`); }}>
-            <h2>Đội chơi: vào phòng</h2>
+            <h2>Người chơi: vào phòng</h2>
             <label className="field">Mã phòng<input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={5} placeholder="VD: K7M2Q" /></label>
             <button className="btn" disabled={code.trim().length < 5}>Tiếp tục</button>
           </form>

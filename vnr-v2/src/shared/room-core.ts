@@ -5,7 +5,8 @@ import {
 import { QUESTION_BANK, questionById } from '../game/questions.ts';
 import { TEAM_COLORS, type GameAction, type GameState, type SkillCard, type TeamColor } from '../game/types.ts';
 
-export interface LobbyTeam { id: string; name: string; color: TeamColor; token: string; lastSeen: number }
+/** One player (device) per horse. `slot` 0-5 is the fixed seat and colour on the board. */
+export interface LobbyTeam { id: string; name: string; slot: number; color: TeamColor; token: string; lastSeen: number }
 
 export interface RoomRecord {
   code: string;
@@ -28,6 +29,7 @@ export type RoomCommand =
   | { type: 'end' }
   | { type: 'rematch' }
   | { type: 'remove-team'; teamId: string }
+  | { type: 'leave' }
   | { type: 'game'; action: GameAction };
 
 export type RoomMap = Map<string, RoomRecord>;
@@ -59,19 +61,32 @@ export function getRoom(rooms: RoomMap, code: string): RoomRecord | null {
 
 const bump = (room: RoomRecord): void => { room.revision += 1; };
 
-export function joinRoom(room: RoomRecord, name: string, color?: string): LobbyTeam {
-  if (room.status !== 'lobby') throw new Error('Phòng đã bắt đầu, không thể tham gia thêm.');
+/**
+ * Claims a horse slot (0-5). A player who already holds a slot moves to the new one,
+ * so people can change their mind until the host starts the game.
+ */
+export function claimSlot(room: RoomRecord, name: string, slot: number | undefined, existing?: LobbyTeam): LobbyTeam {
+  if (room.status !== 'lobby') throw new Error('Phòng đã bắt đầu, không thể đổi hoặc chọn thêm ngựa.');
   const clean = name.trim().replace(/\s+/g, ' ').slice(0, 24);
-  if (clean.length < 2) throw new Error('Tên đội cần ít nhất 2 ký tự.');
-  if (room.teams.length >= TEAM_COLORS.length) throw new Error('Phòng đã đủ 6 đội.');
-  if (room.teams.some((t) => t.name.toLocaleLowerCase('vi') === clean.toLocaleLowerCase('vi'))) throw new Error('Tên đội đã có người dùng.');
-  const taken = new Set(room.teams.map((t) => t.color));
-  const wanted = TEAM_COLORS.find((c) => c === color && !taken.has(c));
-  const picked = wanted ?? TEAM_COLORS.find((c) => !taken.has(c))!;
-  const team: LobbyTeam = { id: `t${room.teams.length + 1}-${picked}`, name: clean, color: picked, token: token(), lastSeen: Date.now() };
+  if (clean.length < 2) throw new Error('Tên người chơi cần ít nhất 2 ký tự.');
+  const free = (i: number) => !room.teams.some((t) => t.slot === i && t !== existing);
+  const wanted = slot === undefined ? [0, 1, 2, 3, 4, 5].find(free) : slot;
+  if (wanted === undefined || !Number.isInteger(wanted) || wanted < 0 || wanted >= TEAM_COLORS.length) throw new Error('Phòng đã đủ 6 người chơi.');
+  if (!free(wanted)) throw new Error(`Ngựa số ${wanted + 1} đã có người chọn.`);
+  if (room.teams.some((t) => t !== existing && t.name.toLocaleLowerCase('vi') === clean.toLocaleLowerCase('vi'))) throw new Error('Tên này đã có người dùng.');
+  const color = TEAM_COLORS[wanted];
+  if (existing) { Object.assign(existing, { name: clean, slot: wanted, color, id: `t${wanted + 1}-${color}` }); bump(room); return existing; }
+  const team: LobbyTeam = { id: `t${wanted + 1}-${color}`, name: clean, slot: wanted, color, token: token(), lastSeen: Date.now() };
   room.teams.push(team);
+  room.teams.sort((x, y) => x.slot - y.slot);
   bump(room);
   return team;
+}
+
+export function leaveSlot(room: RoomRecord, existing: LobbyTeam): void {
+  if (room.status !== 'lobby') throw new Error('Không thể rời phòng khi ván đấu đã bắt đầu.');
+  room.teams = room.teams.filter((t) => t !== existing);
+  bump(room);
 }
 
 export function viewerFor(room: RoomRecord, hostToken?: string, teamToken?: string): Viewer {
@@ -83,7 +98,11 @@ export function viewerFor(room: RoomRecord, hostToken?: string, teamToken?: stri
 
 export function runCommand(room: RoomRecord, viewer: Viewer, command: RoomCommand): void {
   const now = Date.now();
-  if (command.type === 'game') {
+  if (command.type === 'leave') {
+    if (viewer.role !== 'team') throw new Error('Bạn chưa chọn ngựa.');
+    const me = room.teams.find((x) => x.id === viewer.teamId);
+    if (me) leaveSlot(room, me);
+  } else if (command.type === 'game') {
     if (viewer.role !== 'team') throw new Error('Chỉ đội chơi mới thao tác được.');
     if (!room.game) throw new Error('Ván đấu chưa bắt đầu.');
     room.game = applyAction(room.game, viewer.teamId, command.action, now, rng, QUESTION_BANK);
@@ -92,7 +111,7 @@ export function runCommand(room: RoomRecord, viewer: Viewer, command: RoomComman
     switch (command.type) {
       case 'start':
         if (room.status !== 'lobby') throw new Error('Ván đấu đã bắt đầu.');
-        room.game = createGame(room.teams, QUESTION_BANK, now, rng, room.options);
+        room.game = createGame(room.teams.map((x) => ({ id: x.id, seat: x.slot })), QUESTION_BANK, now, rng, room.options);
         room.status = 'playing';
         break;
       case 'pause': if (room.game) room.game = pauseGame(room.game, now); break;
@@ -100,7 +119,7 @@ export function runCommand(room: RoomRecord, viewer: Viewer, command: RoomComman
       case 'end': if (room.game) room.game = endGame(room.game, now); break;
       case 'rematch':
         if (room.status !== 'finished') throw new Error('Chỉ chơi lại được khi ván đã kết thúc.');
-        room.game = createGame(room.teams, QUESTION_BANK, now, rng, room.options);
+        room.game = createGame(room.teams.map((x) => ({ id: x.id, seat: x.slot })), QUESTION_BANK, now, rng, room.options);
         room.status = 'playing';
         break;
       case 'remove-team':
@@ -121,7 +140,7 @@ export function projectRoom(room: RoomRecord, viewer: Viewer) {
   return {
     code: room.code, title: room.title, status: room.status, revision: room.revision, serverNow: Date.now(),
     viewer: viewer.role === 'team' ? { role: 'team' as const, teamId: viewer.teamId } : { role: viewer.role },
-    teams: room.teams.map((t) => ({ id: t.id, name: t.name, color: t.color, online: Date.now() - t.lastSeen < 15_000 })),
+    teams: room.teams.map((t) => ({ id: t.id, name: t.name, slot: t.slot, color: t.color, online: Date.now() - t.lastSeen < 15_000 })),
     game: g && {
       phase: g.phase, deadline: g.deadline, paused: g.paused, pausedRemaining: g.pausedRemaining, finish: g.finish,
       order: g.order, turnTeamId: g.turnTeamId, turnNumber: g.turnNumber, dice: g.dice, skillUsed: g.skillUsed,

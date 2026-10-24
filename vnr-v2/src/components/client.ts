@@ -40,9 +40,9 @@ export function useRoom(code: string) {
     finally { setBusy(false); }
   }, [code, apply]);
 
-  const join = useCallback(async (name: string, color?: string) => {
+  const join = useCallback(async (name: string, slot?: number) => {
     setBusy(true);
-    try { apply(await call(`/api/rooms/${code}/join`, { name, color })); setError(null); }
+    try { apply(await call(`/api/rooms/${code}/join`, { name, slot })); setError(null); }
     catch (e) { setError(e instanceof Error ? e.message : 'Không tham gia được.'); }
     finally { setBusy(false); }
   }, [code, apply]);

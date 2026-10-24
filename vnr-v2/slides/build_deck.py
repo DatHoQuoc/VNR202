@@ -72,7 +72,7 @@ s.notes_slide.notes_text_frame.text = 'PHÚT 00-02 · Thành viên 1. Chào hộ
 s = slide('Vì sao cần một cách học khác về sự ra đời của Đảng?', 'Bối cảnh · Câu hỏi nghiên cứu trung tâm', 2,
           'PHÚT 00-02 · Thành viên 1. Nêu vấn đề: nội dung chương dày mốc thời gian, tên tổ chức, tên văn kiện nên sinh viên dễ học vẹt. Chốt Central Question và mục tiêu học tập.')
 card(s, 0.6, 1.8, 5.9, 2.3, 'Vấn đề thực tế', 'Chương I có hàng chục mốc, 3 tổ chức cộng sản, 4 văn kiện hội nghị 1930. Sinh viên thuộc lòng rồi quên, khó thấy logic: vì sao các phong trào trước thất bại và vì sao chỉ con đường vô sản thành công.', GREEN)
-card(s, 6.8, 1.8, 5.9, 2.3, 'Giải pháp: học bằng cuộc đua', 'Cá ngựa 6 đội. Mỗi lượt đổ xúc xắc và trả lời một câu hỏi từ giáo trình. Đúng thì nhận thẻ kỹ năng để tăng tốc hoặc chặn đối thủ. Về đích trước thì thắng.', GOLD)
+card(s, 6.8, 1.8, 5.9, 2.3, 'Giải pháp: học bằng cuộc đua', 'Cá ngựa 6 người chơi. Mỗi lượt đổ xúc xắc và trả lời một câu hỏi từ giáo trình. Đúng thì nhận thẻ kỹ năng để tăng tốc hoặc chặn đối thủ. Về đích trước thì thắng.', GOLD)
 box(s, 0.6, 4.5, 12.1, 1.9, RGBColor(0xE8, 0xF0, 0xE8))
 text(s, 0.9, 4.65, 11.5, 0.4, 'CÂU HỎI NGHIÊN CỨU TRUNG TÂM', 12, True, GREEN)
 text(s, 0.9, 5.05, 11.5, 1.3, '“Làm thế nào để sinh viên không chỉ nhớ mà còn hiểu vì sao sự ra đời của Đảng (2/1930) và Cương lĩnh chính trị đầu tiên là bước ngoặt tất yếu của cách mạng Việt Nam?”', 20, True, INK, font='Cambria')
@@ -126,14 +126,14 @@ for i, (n, t, b) in enumerate(steps):
     text(s, x + 0.15, 1.8, 2, 0.8, n, 36, True, RGBColor(0xF7, 0xE7, 0xCF), font='Cambria')
     text(s, x + 0.15, 2.65, 2, 0.5, t, 17, True, RGBColor(255, 255, 255))
     text(s, x + 0.15, 3.2, 1.95, 1.2, b, 13, False, RGBColor(255, 255, 255))
-bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: vòng đua chung 24 ô + đường về nhà 4 ô an toàn; đáp xuống ô có ngựa đội khác (trừ ô ★) thì húc lùi 3 ô.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 2-6 đội, mỗi đội một thiết bị; màn chiếu riêng cho lớp; 20-30 người cùng xem/chơi.'], 15)
+bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: vòng đua chung 24 ô + đường về nhà 4 ô an toàn; đáp xuống ô có ngựa đội khác (trừ ô ★) thì húc lùi 3 ô.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 2-6 người chơi, mỗi người một ngựa trên một laptop; màn chiếu riêng cho lớp; 20-30 người cùng xem.'], 15)
 
 # 7 ------------------------------------------------------------------------
 s = slide('DEMO trực tiếp: một lượt chơi', 'Sản phẩm sáng tạo · Demo', 7,
           'PHÚT 05-08 · Thành viên 3. DEMO THẬT: (1) mở màn chiếu /rooms/<mã>/board; (2) một đội đổ xúc xắc; (3) đọc câu hỏi, trả lời; (4) chỉ lời giải thích và số trang hiện sau mỗi lượt; (5) nhấn vào bảng xếp hạng. Chuẩn bị phương án dự phòng: video quay màn hình 60 giây.')
-picture(s, '06-projector.png', 0.6, 1.6, w=6.8)
-picture(s, '05-team-mobile.png', 8.7, 1.5, h=5.4, crop=(0, 0, 420, 1180))
-text(s, 0.6, 5.75, 7.4, 1.2, ['Màn chiếu cho cả lớp: bàn cờ, lượt, câu hỏi, bảng xếp hạng, diễn biến.', 'Mỗi đội một điện thoại: câu hỏi, 4 đáp án, thẻ kỹ năng riêng (đối thủ chỉ thấy số thẻ).'], 14, False, INK)
+picture(s, '06-projector.png', 0.6, 1.6, w=6.9)
+picture(s, '02-lobby-host.png', 7.7, 1.6, w=5.1)
+text(s, 0.6, 5.75, 7.4, 1.2, ['Màn chiếu cho cả lớp: bàn cờ, lượt, câu hỏi, bảng xếp hạng, diễn biến.', 'Phòng chờ: mỗi người chọn 1 trong 6 ngựa. Trên laptop của mình, người chơi thấy câu hỏi, 4 đáp án và thẻ kỹ năng riêng (đối thủ chỉ thấy số thẻ).'], 14, False, INK)
 
 # 8 ------------------------------------------------------------------------
 s = slide('10 thẻ kỹ năng: dùng lên đối thủ để chặn đường về đích', 'Sản phẩm sáng tạo · Gắn với nội dung giáo trình', 8,
@@ -165,7 +165,7 @@ bullets(s, 0.6, 4.6, 12, 2.2, ['“[Trích phản hồi 1]”:: → [Thay đổi
 s = slide('Nhật ký cải tiến sản phẩm: từ v1 đến v2', 'Quy trình thiết kế · 04_Product_Prototype_DevelopmentLog', 10,
           'PHÚT 08-10 · Thành viên 4. So sánh v1 và v2. Giải thích lý do chuyển từ đấu máu 2 đội sang cá ngựa 6 đội: lớp đông, cần cả lớp cùng tham gia và có tương tác chặn nhau. Liệt kê rõ phần AI hỗ trợ trong 07_AI_Declaration.')
 card(s, 0.6, 1.7, 5.9, 4.4, 'v1 · Đấu Trường Tri Thức', ['2 đội đấu trực tiếp, thanh máu (HP)', 'Thẻ câu hỏi, thẻ đáp án, 10 kỹ năng công / thủ', 'Bán kết + chung kết, chỉ 4 đội', 'Nội dung: Tư tưởng Hồ Chí Minh', 'Hạn chế: nhiều đội ngồi chờ lâu; khó cho lớp 20-30 người'], GOLD)
-card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 đội đua cùng lúc trên một bàn cờ', 'Đúng → đi + nhận thẻ; sai → đi nhưng không thẻ', '10 thẻ kỹ năng: chặn đối thủ, tăng tốc, khiên, hỗ trợ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
+card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 người đua cùng lúc trên một bàn cờ', 'Đúng → đi + nhận thẻ; sai → đi nhưng không thẻ', '10 thẻ kỹ năng: chặn đối thủ, tăng tốc, khiên, hỗ trợ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
 text(s, 0.6, 6.3, 12, 0.5, 'Giới hạn hiện tại: dữ liệu phòng lưu trong bộ nhớ (mất khi khởi động lại); hướng phát triển: Redis, WebSocket, thêm bộ câu hỏi các chương khác.', 13, False, MUTED)
 
 # 11 -----------------------------------------------------------------------

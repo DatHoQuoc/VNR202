@@ -66,13 +66,15 @@ function drawSkill(s: GameState, rng: Rng): SkillCard {
 export interface GameOptions { rollMs?: number; questionMs?: number; finish?: number }
 
 export function createGame(
-  teams: { id: string }[], bank: Question[], now: number, rng: Rng, options: GameOptions = {}
+  input: { id: string; seat: number }[], bank: Question[], now: number, rng: Rng, options: GameOptions = {}
 ): GameState {
-  if (teams.length < 2 || teams.length > 6) throw new Error('Cần từ 2 đến 6 đội để bắt đầu.');
+  if (input.length < 2 || input.length > 6) throw new Error('Cần từ 2 đến 6 người chơi để bắt đầu.');
+  // Seats are fixed board positions (slot 1-6), so turn order follows the slot number.
+  const teams = [...input].sort((a, b) => a.seat - b.seat);
   const players: Record<string, PlayerState> = {};
-  teams.forEach((t, seat) => {
+  teams.forEach((t) => {
     players[t.id] = {
-      teamId: t.id, seat, progress: 0, hand: [], stunned: false, cap: null, boost: 0,
+      teamId: t.id, seat: t.seat, progress: 0, hand: [], stunned: false, cap: null, boost: 0,
       doubleDice: false, shield: false, correct: 0, answered: 0
     };
   });

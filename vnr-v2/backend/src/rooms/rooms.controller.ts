@@ -55,9 +55,10 @@ export class RoomsController {
   }
 
   @Post(':code/join')
-  join(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Param('code') code: string, @Body() body: { name?: string; color?: string }) {
+  join(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Param('code') code: string, @Body() body: { name?: string; slot?: number }) {
     this.requireJson(req);
-    const { team, view } = this.rooms.join(code, String(body?.name ?? ''), body?.color);
+    const slot = body?.slot === undefined ? undefined : Number(body.slot);
+    const { team, view } = this.rooms.join(code, String(body?.name ?? ''), slot, this.tokens(req, code).team);
     this.setCookie(req, res, `vnr_team_${view.code}`, team.token);
     return view;
   }

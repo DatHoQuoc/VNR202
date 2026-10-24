@@ -11,7 +11,7 @@ function seeded(seed = 7) {
   let a = seed;
   return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; };
 }
-const teams = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `t${i + 1}` }));
+const teams = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `t${i + 1}`, seat: i }));
 const newGame = (n = 6, seed = 7) => createGame(teams(n), QUESTION_BANK, 1_000, seeded(seed));
 const give = (s: GameState, id: string, kind: SkillKind, cardId = `x-${kind}`) => { s.players[id].hand.push({ id: cardId, kind }); return cardId; };
 const correctIndex = (s: GameState) => s.question!.answerIndex;
@@ -25,6 +25,13 @@ test('question bank is well formed', () => {
     assert.equal(new Set(all).size, 4, q.id);
     assert.ok(q.text && q.hint && q.explain && q.ref, q.id);
   }
+});
+
+test('seats are fixed board slots: gaps allowed, turn order follows slot number', () => {
+  const s = createGame([{ id: 'c', seat: 5 }, { id: 'a', seat: 0 }, { id: 'b', seat: 2 }], QUESTION_BANK, 0, seeded());
+  assert.deepEqual(s.order, ['a', 'b', 'c']);
+  assert.deepEqual([s.players.a.seat, s.players.b.seat, s.players.c.seat], [0, 2, 5]);
+  assert.equal(s.turnTeamId, 'a');
 });
 
 test('needs 2 to 6 teams', () => {

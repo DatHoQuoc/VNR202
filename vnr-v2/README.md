@@ -1,10 +1,11 @@
 # Cá Ngựa Cách Mạng · VNR202 · phiên bản 2
 
-Game cá ngựa **tối đa 6 đội** ôn tập *Chương I – Đảng Cộng sản Việt Nam ra đời và Cương lĩnh chính trị đầu tiên (2/1930)*. Phát triển từ game thẻ bài "Đấu Trường Tri Thức" (v1, thư mục gốc của repo): v1 là 2 đội đấu máu (HP), v2 là cuộc đua 6 đội về đích.
+Game cá ngựa **tối đa 6 người chơi, mỗi người một con ngựa** ôn tập *Chương I – Đảng Cộng sản Việt Nam ra đời và Cương lĩnh chính trị đầu tiên (2/1930)*. Phát triển từ game thẻ bài "Đấu Trường Tri Thức" (v1, thư mục gốc của repo): v1 là 2 đội đấu máu (HP), v2 là cuộc đua 6 đội về đích.
 
 ## Luật chơi
 
-1. Mỗi đội một ngựa, xuất phát từ chuồng, chạy **1 vòng đua chung 24 ô** rồi rẽ vào **đường về nhà 4 ô** (an toàn) và tới **ĐÍCH (28 bước)**. Ai về đích trước thắng.
+0. **Chọn ngựa:** vào phòng bằng mã, nhập tên rồi bấm “Chọn ngựa này” ở một trong 6 ô (ngựa số 1 đến 6, mỗi số một màu cố định). Có thể đổi sang ô trống khác hoặc rời ngựa trước khi bắt đầu; cần ≥ 2 người.
+1. Mỗi người một ngựa, xuất phát từ chuồng, chạy **1 vòng đua chung 24 ô** rồi rẽ vào **đường về nhà 4 ô** (an toàn) và tới **ĐÍCH (28 bước)**. Ai về đích trước thắng.
 2. Đến lượt: (tuỳ chọn) dùng **1 thẻ kỹ năng** → **đổ xúc xắc** → trả lời **1 câu hỏi 4 đáp án** (mặc định 30 giây).
 3. **Trả lời đúng**: đi đúng số ô xúc xắc **và nhận 1 thẻ kỹ năng**. **Sai hoặc hết giờ**: *vẫn đi tiếp* nhưng **không nhận thẻ**.
 4. Đáp xuống ô có ngựa đội khác (trừ 6 ô ★) → ngựa đó bị **húc lùi 3 ô**.
@@ -30,7 +31,7 @@ Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lư�
 
 **Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ người điều khiển phòng** xem được (API trả 403 với người khác). Trong phòng có liên kết “Thẻ & câu hỏi”.
 
-**Giao diện 2.5D:** bàn cờ nằm trên mặt bàn gỗ nghiêng (CSS perspective), quân ngựa là pawn 3D đứng thẳng, nhảy khi đến lượt; thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
+**Giao diện 2.5D (chỉ tối ưu cho laptop/PC, không có bố cục điện thoại):** bàn cờ 6 vùng màu như bàn cá ngựa thật, nghiêng trên nền trời (CSS perspective), ô gạch kem, đường về nhà đánh số 1-4, quân ngựa hình đầu ngựa đứng thẳng và nhảy khi đến lượt; thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
 
 ## Kiến trúc: Next.js (giao diện) + NestJS (backend)
 

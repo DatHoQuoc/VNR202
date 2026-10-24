@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Board, COLOR_HEX, type BoardHorse } from './board';
+import { Board, COLOR_HEX, HorseIcon, type BoardHorse } from './board';
 import { useClock, useRoom, type RoomView as View } from './client';
 import { skillByKind } from '@/game/skills';
 import { COLOR_NAMES, TEAM_COLORS, type SkillCard, type SkillKind } from '@/game/types';
+import type { CSSProperties } from 'react';
 
 type Game = NonNullable<View['game']>;
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -28,25 +29,6 @@ function useRolling(dice: number | null): boolean {
   return rolling;
 }
 
-function JoinForm({ onJoin, busy, taken }: { onJoin: (name: string, color?: string) => void; busy: boolean; taken: string[] }) {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState<string>('');
-  return (
-    <form className="panel stack" onSubmit={(e) => { e.preventDefault(); onJoin(name, color || undefined); }}>
-      <h2>Tham gia với tư cách một đội</h2>
-      <label className="field">Tên đội<input value={name} maxLength={24} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Bình Minh" required /></label>
-      <div className="field">Màu ngựa (không bắt buộc)
-        <div className="swatches">
-          {TEAM_COLORS.map((c) => (
-            <button key={c} type="button" disabled={taken.includes(c)} className={color === c ? 'swatch on' : 'swatch'} style={{ background: COLOR_HEX[c] }} onClick={() => setColor(color === c ? '' : c)} aria-label={COLOR_NAMES[c]} title={COLOR_NAMES[c]} />
-          ))}
-        </div>
-      </div>
-      <button className="btn primary" disabled={busy || name.trim().length < 2}>Vào phòng</button>
-    </form>
-  );
-}
-
 export function SkillCardView({ card, kind, disabledReason, onUse, selected, big, style }: { card?: SkillCard; kind?: SkillKind; disabledReason?: string | null; onUse?: () => void; selected?: boolean; big?: boolean; style?: React.CSSProperties }) {
   const def = skillByKind[(card?.kind ?? kind)!];
   const tone = def.target === 'enemy' ? 'enemy' : def.timing === 'question' ? 'help' : 'self';
@@ -66,6 +48,9 @@ export function SkillCardView({ card, kind, disabledReason, onUse, selected, big
 export function RoomView({ code, projector = false }: { code: string; projector?: boolean }) {
   const { view, error, busy, send, join, serverNow } = useRoom(code);
   const [pending, setPending] = useState<SkillCard | null>(null);
+  const [playerName, setPlayerName] = useState('');
+  useEffect(() => { try { setPlayerName(localStorage.getItem('vnr_player') ?? ''); } catch { /* storage unavailable */ } }, []);
+  const rename = (v: string) => { setPlayerName(v); try { localStorage.setItem('vnr_player', v); } catch { /* ignore */ } };
   useClock();
   const rolling = useRolling(view?.game?.dice ?? null);
 
@@ -84,7 +69,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
         teamId: id, seat: g.players[id].seat, name: name(id), color: names[id].color, progress: g.players[id].progress,
         active: g.turnTeamId === id && g.phase !== 'finished', shield: g.players[id].shield, stunned: g.players[id].stunned
       }))
-    : view.teams.map((t, seat) => ({ teamId: t.id, seat, name: t.name, color: t.color, progress: 0, active: false, shield: false, stunned: false }));
+    : view.teams.map((t) => ({ teamId: t.id, seat: t.slot, name: t.name, color: t.color, progress: 0, active: false, shield: false, stunned: false }));
 
   const remaining = g && (g.paused ? g.pausedRemaining : g.deadline !== null ? Math.max(0, g.deadline - serverNow()) : null);
   const run = (action: Parameters<typeof send>[0]) => { setPending(null); void send(action); };
@@ -105,28 +90,46 @@ export function RoomView({ code, projector = false }: { code: string; projector?
   );
 
   if (view.status === 'lobby' || !g) {
+    const mySlot = view.teams.find((x) => x.id === me)?.slot ?? null;
+    const canPick = view.viewer.role !== 'host' && !projector;
     return (
       <>{header}
         <main className="shell lobby">
           <section className="panel">
-            <p className="eyebrow">PHÒNG CHỜ · {view.teams.length}/6 ĐỘI</p>
-            <h1>Chờ đủ đội để xuất phát</h1>
-            <p className="muted">Chia sẻ mã <b className="code">{view.code}</b> hoặc liên kết bên dưới. Mỗi đội dùng một thiết bị; có thể chơi từ 2 đến 6 đội.</p>
-            {!projector && <input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />}
-            <ul className="team-list">
-              {view.teams.map((t) => (
-                <li key={t.id}><i style={{ background: COLOR_HEX[t.color] }} /><b>{t.name}</b><span className="muted">{COLOR_NAMES[t.color]}{t.id === me ? ' · bạn' : ''}</span>
-                  {isHost && <button className="text-link" onClick={() => run({ type: 'remove-team', teamId: t.id })}>Xóa</button>}</li>
-              ))}
-              {Array.from({ length: 6 - view.teams.length }, (_, i) => <li key={`e${i}`} className="empty">Đang chờ đội…</li>)}
-            </ul>
-            {isHost && <button className="btn primary big" disabled={busy || view.teams.length < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({view.teams.length} đội)</button>}
-            {me && <p className="notice">Bạn đã vào phòng. Giữ nguyên trang này, người điều khiển sẽ bắt đầu ván đấu.</p>}
+            <p className="eyebrow">PHÒNG CHỜ · {view.teams.length}/6 NGƯỜI CHƠI</p>
+            <h1>Chọn ngựa của bạn</h1>
+            <p className="muted">Mã phòng <b className="code">{view.code}</b>. Mỗi người điều khiển <b>một con ngựa</b>, từ ngựa số 1 đến số 6. Cần ít nhất 2 người để bắt đầu.</p>
+            {canPick && (
+              <label className="field">Tên của bạn
+                <input value={playerName} maxLength={24} onChange={(e) => rename(e.target.value)} placeholder="Ví dụ: Nguyễn An" />
+              </label>
+            )}
+            <div className="slots">
+              {TEAM_COLORS.map((color, slot) => {
+                const owner = view.teams.find((x) => x.slot === slot);
+                const mine = owner?.id === me;
+                return (
+                  <div key={slot} className={`slot${owner ? ' taken' : ''}${mine ? ' mine' : ''}`} style={{ '--c': COLOR_HEX[color] } as CSSProperties}>
+                    <div className="slot-horse"><HorseIcon /></div>
+                    <div className="slot-info">
+                      <b>Ngựa số {slot + 1} · {COLOR_NAMES[color]}</b>
+                      <span>{owner ? <>{owner.name}{mine ? ' (bạn)' : ''}</> : <i>Còn trống</i>}</span>
+                    </div>
+                    <div className="slot-actions">
+                      {!owner && canPick && <button className="btn primary" disabled={busy || playerName.trim().length < 2} onClick={() => join(playerName, slot)}>{mySlot === null ? 'Chọn ngựa này' : 'Đổi sang ngựa này'}</button>}
+                      {mine && <button className="text-link" onClick={() => run({ type: 'leave' })}>Rời ngựa</button>}
+                      {owner && isHost && <button className="text-link" onClick={() => run({ type: 'remove-team', teamId: owner.id })}>Xóa</button>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {canPick && playerName.trim().length < 2 && mySlot === null && <p className="notice">Nhập tên của bạn rồi bấm “Chọn ngựa này” ở một ô còn trống.</p>}
+            {mySlot !== null && <p className="notice">Bạn đang giữ ngựa số {mySlot + 1}. Có thể đổi sang ô trống khác trước khi bắt đầu; hãy giữ nguyên trang này.</p>}
+            {isHost && <button className="btn primary big" disabled={busy || view.teams.length < 2} onClick={() => run({ type: 'start' })}>Bắt đầu cuộc đua ({view.teams.length} người)</button>}
+            {isHost && <input className="copy" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />}
           </section>
-          <section className="stack">
-            <div className="panel board-wrap"><Board horses={horses} /></div>
-            {view.viewer.role === 'spectator' && !projector && <JoinForm onJoin={join} busy={busy} taken={view.teams.map((t) => t.color)} />}
-          </section>
+          <section className="panel board-wrap"><Board horses={horses} /></section>
           {error && <p className="toast error">{error}</p>}
         </main>
       </>

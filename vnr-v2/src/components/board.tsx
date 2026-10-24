@@ -1,4 +1,5 @@
 'use client';
+import type { CSSProperties } from 'react';
 import { FINISH, HOME_LANE, RING_MAX, RING_SIZE, SEAT_GAP } from '@/game/engine';
 import type { TeamColor } from '@/game/types';
 
@@ -35,50 +36,57 @@ export function Board({ horses, finish = FINISH }: { horses: BoardHorse[]; finis
   }
 
   return (
-    <svg className="board" viewBox="0 0 640 640" role="img" aria-label="Bàn cờ cá ngựa sáu đội">
-      <circle cx={C} cy={C} r={RING_R + 40} className="board-disc" />
-      {Array.from({ length: 6 }, (_, seat) => {
-        const color = seatHex(seat);
-        const [sx, sy] = polar(rad(seat * SEAT_GAP), STABLE_R);
-        return (
-          <g key={`lane-${seat}`}>
-            {Array.from({ length: HOME_LANE }, (_, j) => {
-              const [x, y] = polar(rad(seat * SEAT_GAP), RING_R - 46 * (j + 1));
-              return <circle key={j} cx={x} cy={y} r={17} className="cell lane" style={{ fill: color ?? '#e6e1d3', opacity: color ? 0.55 : 0.5 }} />;
-            })}
-            <circle cx={sx} cy={sy} r={25} className="stable" style={{ stroke: color ?? '#c9c4b2' }} />
-          </g>
-        );
-      })}
-      {Array.from({ length: RING_SIZE }, (_, cell) => {
-        const [x, y] = polar(rad(cell), RING_R);
-        const isStart = cell % SEAT_GAP === 0;
-        const color = isStart ? seatHex(cell / SEAT_GAP) : null;
-        return (
-          <g key={cell}>
-            <circle cx={x} cy={y} r={isStart ? 20 : 17} className="cell" style={{ fill: color ?? (isStart ? '#d9d3c0' : '#fffdf8') }} />
-            {isStart && <text x={x} y={y + 5} textAnchor="middle" className="cell-star">★</text>}
-          </g>
-        );
-      })}
-      <circle cx={C} cy={C} r={52} className="goal" />
-      <text x={C} y={C - 4} textAnchor="middle" className="goal-text">ĐÍCH</text>
-      <text x={C} y={C + 14} textAnchor="middle" className="goal-sub">3/2/1930</text>
-      {horses.map((h) => {
-        const [x, y] = positionOf(h.seat, h.progress, finish);
-        const group = groups.get(`${Math.round(x)}:${Math.round(y)}`)!;
-        const dx = (group.indexOf(h) - (group.length - 1) / 2) * 15;
-        return (
-          <g key={h.teamId} className={`horse${h.active ? ' active' : ''}`} style={{ transform: `translate(${x + dx}px, ${y}px)` }}>
-            {h.active && <circle r={25} className="halo" style={{ stroke: COLOR_HEX[h.color] }} />}
-            <circle r={15} style={{ fill: COLOR_HEX[h.color] }} className="horse-body" />
-            <text y={6} textAnchor="middle" className="horse-text">♞</text>
-            {h.shield && <text x={14} y={-10} className="badge">🛡️</text>}
-            {h.stunned && <text x={14} y={-10} className="badge">💤</text>}
-            <title>{`${h.name}: ${h.progress}/${finish}`}</title>
-          </g>
-        );
-      })}
-    </svg>
+    <div className="table-scene">
+      <div className="table-top">
+        <svg className="board" viewBox="0 0 640 640" role="img" aria-label="Bàn cờ cá ngựa sáu đội">
+          <circle cx={C} cy={C} r={RING_R + 40} className="board-disc" />
+          {Array.from({ length: 6 }, (_, seat) => {
+            const color = seatHex(seat);
+            const [sx, sy] = polar(rad(seat * SEAT_GAP), STABLE_R);
+            return (
+              <g key={`lane-${seat}`}>
+                {Array.from({ length: HOME_LANE }, (_, j) => {
+                  const [x, y] = polar(rad(seat * SEAT_GAP), RING_R - 46 * (j + 1));
+                  return <g key={j}><circle cx={x} cy={y + 4} r={17} fill="#0003" /><circle cx={x} cy={y} r={17} className="cell lane" style={{ fill: color ?? '#e6e1d3', opacity: color ? 0.6 : 0.5 }} /></g>;
+                })}
+                <circle cx={sx} cy={sy} r={25} className="stable" style={{ stroke: color ?? '#c9c4b2' }} />
+              </g>
+            );
+          })}
+          {Array.from({ length: RING_SIZE }, (_, cell) => {
+            const [x, y] = polar(rad(cell), RING_R);
+            const isStart = cell % SEAT_GAP === 0;
+            const color = isStart ? seatHex(cell / SEAT_GAP) : null;
+            return (
+              <g key={cell}>
+                <circle cx={x} cy={y + 5} r={isStart ? 20 : 17} fill="#0003" />
+                <circle cx={x} cy={y} r={isStart ? 20 : 17} className="cell" style={{ fill: color ?? (isStart ? '#d9d3c0' : '#fffdf8') }} />
+                {isStart && <text x={x} y={y + 5} textAnchor="middle" className="cell-star">★</text>}
+              </g>
+            );
+          })}
+          <circle cx={C} cy={C + 7} r={52} fill="#0004" />
+          <circle cx={C} cy={C} r={52} className="goal" />
+          <text x={C} y={C - 4} textAnchor="middle" className="goal-text">ĐÍCH</text>
+          <text x={C} y={C + 14} textAnchor="middle" className="goal-sub">3/2/1930</text>
+        </svg>
+        <div className="pawns">
+          {horses.map((h) => {
+            const [x, y] = positionOf(h.seat, h.progress, finish);
+            const group = groups.get(`${Math.round(x)}:${Math.round(y)}`)!;
+            const dx = (group.indexOf(h) - (group.length - 1) / 2) * 15;
+            return (
+              <div key={h.teamId} className={`pawn${h.active ? ' active' : ''}`} title={`${h.name}: ${h.progress}/${finish}`}
+                style={{ left: `${((x + dx) / 640) * 100}%`, top: `${(y / 640) * 100}%`, '--c': COLOR_HEX[h.color] } as CSSProperties}>
+                {(h.shield || h.stunned) && <span className="pawn-badge">{h.shield ? '🛡️' : '💤'}</span>}
+                <span className="pawn-body"><i className="pawn-head" /><i className="pawn-neck" /><i className="pawn-base" /></span>
+                <span className="pawn-shadow" />
+                <span className="pawn-name">{h.name}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { QUESTION_BANK } from '../../../src/game/questions';
 import {
   createRoom, getRoom, joinRoom, projectRoom, runCommand, viewerFor,
   type LobbyTeam, type RoomCommand, type RoomMap, type RoomRecord, type Viewer
@@ -48,6 +49,13 @@ export class RoomsService implements OnModuleDestroy {
     const room = this.find(code);
     const team = this.guard(() => joinRoom(room, name, color));
     return { team, view: projectRoom(room, viewerFor(room, undefined, team.token)) };
+  }
+
+  /** Questions with answers: host only, so players cannot read the answers before the game. */
+  bank(code: string, hostToken?: string) {
+    const room = this.find(code);
+    if (viewerFor(room, hostToken).role !== 'host') throw new ForbiddenException('Chỉ người điều khiển phòng mới xem được đáp án.');
+    return { questions: QUESTION_BANK };
   }
 
   command(code: string, command: RoomCommand, hostToken?: string, teamToken?: string) {

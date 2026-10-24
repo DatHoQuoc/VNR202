@@ -47,16 +47,20 @@ function JoinForm({ onJoin, busy, taken }: { onJoin: (name: string, color?: stri
   );
 }
 
-function SkillCardView({ card, disabledReason, onUse, selected }: { card: SkillCard; disabledReason: string | null; onUse: () => void; selected: boolean }) {
-  const def = skillByKind[card.kind];
-  return (
-    <button className={`skill${selected ? ' selected' : ''} ${def.target}`} disabled={!!disabledReason} onClick={onUse} title={disabledReason ?? def.theme}>
-      <span className="skill-icon">{def.icon}</span>
-      <strong>{def.name}</strong>
-      <small>{def.description}</small>
-      <em>{def.target === 'enemy' ? 'Đối kháng' : def.timing === 'question' ? 'Hỗ trợ khi trả lời' : 'Tự thân'}</em>
-    </button>
+export function SkillCardView({ card, kind, disabledReason, onUse, selected, big, style }: { card?: SkillCard; kind?: SkillKind; disabledReason?: string | null; onUse?: () => void; selected?: boolean; big?: boolean; style?: React.CSSProperties }) {
+  const def = skillByKind[(card?.kind ?? kind)!];
+  const tone = def.target === 'enemy' ? 'enemy' : def.timing === 'question' ? 'help' : 'self';
+  const label = def.target === 'enemy' ? 'CHẶN ĐỐI THỦ' : def.timing === 'question' ? 'HỖ TRỢ' : 'TỰ THÂN';
+  const body = (
+    <>
+      <span className="card-band"><b>{label}</b><b title={def.timing === 'roll' ? 'Dùng trước khi đổ xúc xắc' : 'Dùng khi đang trả lời'}>{def.timing === 'roll' ? '🎲' : '❓'}</b></span>
+      <span className="card-art" aria-hidden="true">{def.icon}</span>
+      <span className="card-body"><strong>{def.name}</strong><span>{def.description}</span><em>{def.theme}</em></span>
+    </>
   );
+  const cls = `game-card ${tone}${big ? ' big' : ''}${selected ? ' is-selected' : ''}`;
+  if (!onUse) return <div className={cls} style={style}>{body}</div>;
+  return <button type="button" className={cls} style={style} disabled={!!disabledReason} onClick={onUse} title={disabledReason ?? def.theme} aria-pressed={selected}>{body}</button>;
 }
 
 export function RoomView({ code, projector = false }: { code: string; projector?: boolean }) {
@@ -95,6 +99,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
         {isHost && <span className="chip dark">Người điều khiển</span>}
         {!me && !isHost && <span className="chip dark">Khán giả</span>}
         {!projector && <Link className="text-link" href={`/rooms/${view.code}/board`} target="_blank">Màn chiếu ↗</Link>}
+        <Link className="text-link" href={isHost ? `/rooms/${view.code}/cards` : '/cards'} target="_blank">{isHost ? 'Thẻ & câu hỏi ↗' : 'Xem thẻ ↗'}</Link>
       </div>
     </header>
   );
@@ -214,7 +219,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
               <div className="panel-head"><h2>Thẻ kỹ năng của bạn ({hand.length}/5)</h2>
                 <div className="status-icons">{mine.shield && <span title="Có khiên">🛡️ Khiên</span>}{mine.boost > 0 && <span>🚩 +{mine.boost}</span>}{mine.doubleDice && <span>🎲 x2</span>}{mine.cap !== null && <span>🚧 tối đa {mine.cap}</span>}{mine.stunned && <span>💤 mất lượt</span>}</div></div>
               {hand.length === 0 ? <p className="muted">Chưa có thẻ. Trả lời đúng để nhận thẻ kỹ năng mới.</p> : (
-                <div className="skills">{hand.map((c) => <SkillCardView key={c.id} card={c} disabledReason={reason(c)} selected={pending?.id === c.id} onUse={() => use(c)} />)}</div>
+                <div className="hand-fan">{hand.map((c, i) => { const off = i - (hand.length - 1) / 2; return <SkillCardView key={c.id} card={c} disabledReason={reason(c)} selected={pending?.id === c.id} onUse={() => use(c)} style={{ '--rot': `${off * 4}deg`, '--lift': `${Math.abs(off) * 7}px` } as React.CSSProperties} />; })}</div>
               )}
               {pending && (
                 <div className="targets">
@@ -269,7 +274,7 @@ function ScoreBoard({ game, names, me }: { game: Game; names: Record<string, { n
             <span className="score-name">{names[id].name}{id === me ? ' (bạn)' : ''}</span>
             <span className="bar"><span style={{ width: `${(p.progress / game.finish) * 100}%`, background: COLOR_HEX[names[id].color] }} /></span>
             <span className="score-num">{p.progress}/{game.finish}</span>
-            <span className="score-meta">🃏{p.handCount}{p.shield ? ' 🛡️' : ''}{p.stunned ? ' 💤' : ''}{p.cap !== null ? ' 🚧' : ''}</span>
+            <span className="score-meta"><span className="score-cards">{Array.from({ length: p.handCount }, (_, i) => <i key={i} className="card-back" />)}</span>{p.shield ? ' 🛡️' : ''}{p.stunned ? ' 💤' : ''}{p.cap !== null ? ' 🚧' : ''}</span>
           </div>
         );
       })}

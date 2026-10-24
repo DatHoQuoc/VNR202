@@ -48,6 +48,12 @@ export class RoomsController {
     return this.rooms.view(code, t.host, t.team);
   }
 
+  @Get(':code/bank')
+  bank(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Param('code') code: string) {
+    res.set('Cache-Control', 'no-store');
+    return this.rooms.bank(code, this.tokens(req, code).host);
+  }
+
   @Post(':code/join')
   join(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Param('code') code: string, @Body() body: { name?: string; color?: string }) {
     this.requireJson(req);

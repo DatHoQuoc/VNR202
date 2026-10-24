@@ -58,7 +58,7 @@ export function Landing({ initialCode = '' }: { initialCode?: string }) {
           </ol>
         </div>
         <div className="panel">
-          <h2>10 thẻ kỹ năng</h2>
+          <h2>10 thẻ kỹ năng · <a className="text-link" href="/cards">xem thẻ ở kích thước lớn →</a></h2>
           <ul className="skill-legend">
             {SKILLS.map((s) => <li key={s.kind}><span>{s.icon}</span><div><b>{s.name}</b> <small>×{s.copies}</small><br /><small>{s.description}</small></div></li>)}
           </ul>

@@ -28,6 +28,10 @@ Game cá ngựa **tối đa 6 đội** ôn tập *Chương I – Đảng Cộng 
 
 Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
 
+**Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ người điều khiển phòng** xem được (API trả 403 với người khác). Trong phòng có liên kết “Thẻ & câu hỏi”.
+
+**Giao diện 2.5D:** bàn cờ nằm trên mặt bàn gỗ nghiêng (CSS perspective), quân ngựa là pawn 3D đứng thẳng, nhảy khi đến lượt; thẻ trên tay xòe như bộ bài, đối thủ chỉ thấy lưng bài.
+
 ## Kiến trúc: Next.js (giao diện) + NestJS (backend)
 
 ```

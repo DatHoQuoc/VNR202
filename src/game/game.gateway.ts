@@ -18,7 +18,7 @@ function run<T>(fn: () => T): Ack<T> {
 
 /**
  * Client -> server (all return an ack {ok, data|error}):
- *   player:join        { code, name, team, playerId? }   -> { playerId, joinedRound, state }
+ *   player:join        { code, name, team, playerId? }   -> { playerId, team, joinedRound, state, me: { picks, guesses, reveals, reflected } }
  *   answer:pick        { round, option }
  *   answer:guess       { round, value }
  *   reflection:submit  { text }
@@ -64,7 +64,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
       client.join(`p:${p.id}`);
       this.game.attach(p.id, client.id);
       this.pushStats();
-      return { playerId: p.id, team: p.team, joinedRound: p.joinedRound, state: this.game.publicState() };
+      return { playerId: p.id, team: p.team, joinedRound: p.joinedRound, state: this.game.publicState(), me: this.game.meFor(p.id) };
     });
   }
 

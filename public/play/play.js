@@ -14,10 +14,9 @@
       return memory;
     }
   }
-  const store = Object.assign({ picks: {}, guesses: {}, reveals: {}, reflected: false }, readStore());
-  store.picks = store.picks || {};
-  store.guesses = store.guesses || {};
-  store.reveals = store.reveals || {};
+  // only the identity is kept locally; answers, results and the reflected flag come from the server (`me`)
+  const saved = readStore();
+  const store = { playerId: saved.playerId, code: saved.code, name: saved.name, team: saved.team };
   function save() {
     memory = store;
     try {
@@ -30,6 +29,8 @@
   // ---------- state ----------
   const S = {
     state: null, // last public state
+    me: { picks: {}, guesses: {}, reveals: {}, reflected: false }, // from the join ack
+    joinedRound: 1,
     joined: false,
     rejoining: !!store.playerId,
     online: false,
@@ -108,8 +109,7 @@
   });
   socket.on('round:reveal', (p) => {
     if (!p || typeof p.round !== 'number') return;
-    store.reveals[p.round] = p;
-    save();
+    S.me.reveals[p.round] = p;
     render();
   });
 
@@ -122,13 +122,11 @@
 
   // ---------- join / rejoin ----------
   function applyJoin(data) {
-    const fresh = store.playerId !== data.playerId;
-    if (fresh) {
-      store.picks = {}; store.guesses = {}; store.reveals = {}; store.reflected = false;
-    }
+    const me = data.me || {};
+    S.me = { picks: me.picks || {}, guesses: me.guesses || {}, reveals: me.reveals || {}, reflected: !!me.reflected };
+    S.joinedRound = data.joinedRound;
     store.playerId = data.playerId;
     store.team = data.team;
-    store.joinedRound = data.joinedRound;
     S.joined = true;
     S.rejoining = false;
     save();
@@ -184,8 +182,7 @@
     setErr($('pick-err'), '');
     const res = await emit('answer:pick', { round, option });
     if (res && res.ok) {
-      store.picks[round] = option;
-      save();
+      S.me.picks[round] = option;
     } else {
       setErr($('pick-err'), viError(res && res.error));
     }
@@ -205,8 +202,7 @@
     $('guess-btn').disabled = true;
     const res = await emit('answer:guess', { round: st.round.n, value });
     if (res && res.ok) {
-      store.guesses[st.round.n] = value;
-      save();
+      S.me.guesses[st.round.n] = value;
     } else {
       setErr($('guess-err'), viError(res && res.error));
     }
@@ -229,8 +225,7 @@
     const res = await emit('reflection:submit', { text });
     $('ref-btn').disabled = false;
     if (res && (res.ok || /already wrote/i.test(res.error || ''))) {
-      store.reflected = true;
-      save();
+      S.me.reflected = true;
       render();
     } else {
       setErr($('ref-err'), viError(res && res.error));
@@ -313,7 +308,7 @@
         box.appendChild(b);
       }
     }
-    const chosen = store.picks[r.n];
+    const chosen = S.me.picks[r.n];
     for (const b of box.children) b.setAttribute('aria-pressed', String(b.dataset.option === chosen));
     $('pick-status').textContent = chosen
       ? 'Bạn đang chọn: ' + chosen + '. Có thể đổi lại khi bước này còn mở.'
@@ -325,13 +320,13 @@
     const r = st.round;
     $('guess-kicker').textContent = 'Vòng ' + r.n + ' · ' + r.title + ' · Bước 2';
     $('guess-ask').textContent = r.step2.ask;
-    const late = typeof store.joinedRound === 'number' && store.joinedRound > r.n;
+    const late = S.joinedRound > r.n;
     const notice = $('guess-late');
     show(notice, late);
-    if (late) notice.textContent = 'Bạn vào phòng muộn nên được tính điểm từ vòng ' + store.joinedRound + '. Vòng này bạn chỉ xem, chưa cần dự đoán.';
+    if (late) notice.textContent = 'Bạn vào phòng muộn nên được tính điểm từ vòng ' + S.joinedRound + '. Vòng này bạn chỉ xem, chưa cần dự đoán.';
     $('guess-input').disabled = late;
     $('guess-btn').disabled = late;
-    const last = store.guesses[r.n];
+    const last = S.me.guesses[r.n];
     if (last !== undefined && document.activeElement !== $('guess-input') && $('guess-input').value === '') {
       $('guess-input').value = String(last);
     }
@@ -345,7 +340,7 @@
 
   function renderResult(st) {
     const r = st.round;
-    const p = store.reveals[r.n];
+    const p = S.me.reveals[r.n];
     const has = !!p;
     show($('res-missing'), !has);
     for (const id of ['res-excused', 'res-you', 'res-noscore', 'res-compare', 'res-correct', 'res-ask']) show($(id), false);
@@ -437,8 +432,8 @@
 
     // reflection (anonymous, one per student) can sit under any screen once the MC opens it
     const open = !!(S.joined && st && st.reflection && st.reflection.open);
-    show($('s-reflect'), open && !store.reflected);
-    show($('s-thanks'), open && !!store.reflected);
+    show($('s-reflect'), open && !S.me.reflected);
+    show($('s-thanks'), open && !!S.me.reflected);
     if (open && st.reflection) {
       $('ref-prompt').textContent = st.reflection.prompt || '';
       $('ref-text').maxLength = st.reflection.max;

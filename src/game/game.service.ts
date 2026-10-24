@@ -387,6 +387,20 @@ export class GameService extends EventEmitter {
     };
   }
 
+  /** Everything a (re)joining player needs to rebuild their screen. `reflected` is memory-only by design. */
+  meFor(playerId: string) {
+    const picks: Record<number, string> = {};
+    const guesses: Record<number, number> = {};
+    const reveals: Record<number, NonNullable<ReturnType<GameService['revealFor']>>> = {};
+    for (const r of this.game.rounds) {
+      if (playerId in r.picks) picks[r.n] = r.picks[playerId];
+      if (playerId in r.guesses) guesses[r.n] = r.guesses[playerId];
+      const rev = this.revealFor(playerId, r.n);
+      if (rev) reveals[r.n] = rev;
+    }
+    return { picks, guesses, reveals, reflected: this.reflected.has(playerId) };
+  }
+
   /** Controller dashboard: counts only, no leaking of distribution before reveal. */
   hostStats() {
     const g = this.game;

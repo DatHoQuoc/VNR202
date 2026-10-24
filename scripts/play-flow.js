@@ -42,6 +42,15 @@ const step = (m) => console.log('✓', m);
   };
 
   const A = await mk(), B = await mk(), C = await mk();
+  // E has no usable localStorage at all (private window / blocked site data)
+  const E = { ctx: await browser.newContext({ viewport: { width: 1100, height: 760 } }) };
+  await E.ctx.addInitScript(() => {
+    const boom = () => { throw new Error('storage blocked'); };
+    Object.defineProperty(window, 'localStorage', { get: boom });
+  });
+  E.page = await E.ctx.newPage();
+  E.page.on('pageerror', (e) => { throw e; });
+  await E.page.goto(`${BASE}/play/`);
   await visible(A.page, 's-join');
   assert.strictEqual(await A.page.locator('#f-team option').count(), 7, 'placeholder + 6 teams');
   await A.page.fill('#f-code', 'abcde');
@@ -63,15 +72,18 @@ const step = (m) => console.log('✓', m);
   await join(A.page, 'An', 1);
   await join(B.page, 'Binh', 2);
   await join(C.page, 'Chi', 3);
-  for (const p of [A, B, C]) await only(p.page, 'wait');
+  await join(E.page, 'Em', 6);
+  for (const p of [A, B, C, E]) await only(p.page, 'wait');
   await shot(A.page, '02-waiting');
-  assert.strictEqual((await host('players', 'GET')).length, 3);
-  step('3 players joined, waiting screen');
+  assert.strictEqual((await host('players', 'GET')).length, 4);
+  step('4 players joined (one without localStorage), waiting screen');
 
   // round 1
   await host('rounds/1/open-pick');
-  for (const p of [A, B, C]) await only(p.page, 'pick');
+  for (const p of [A, B, C, E]) await only(p.page, 'pick');
   assert.strictEqual(await A.page.locator('.opt').count(), 4);
+  await E.page.click('.opt[data-option="A"]');
+  await E.page.waitForSelector('.opt[data-option="A"][aria-pressed="true"]');
   await A.page.click('.opt[data-option="B"]');
   await A.page.waitForSelector('.opt[data-option="B"][aria-pressed="true"]');
   await A.page.click('.opt[data-option="A"]'); // change of mind
@@ -89,13 +101,15 @@ const step = (m) => console.log('✓', m);
   await only(B.page, 'pick');
   await B.page.waitForSelector('.opt[data-option="B"][aria-pressed="true"]');
   const after = await host('players', 'GET');
-  assert.strictEqual(after.length, 3, 'reload must not create a new player');
+  assert.strictEqual(after.length, 4, 'reload must not create a new player');
   assert.strictEqual(after.find((p) => p.name === 'Binh').id, idBefore);
   assert.match(await B.page.textContent('#who'), /Binh · Nhóm 2/);
   step('reload mid-round rejoins as the same player, pick restored');
 
   await host('rounds/1/open-guess');
-  for (const p of [A, B, C]) await only(p.page, 'guess');
+  for (const p of [A, B, C, E]) await only(p.page, 'guess');
+  await E.page.fill('#guess-input', '30'); await E.page.click('#guess-btn');
+  await E.page.waitForSelector('#guess-sent:not([hidden])');
   await A.page.fill('#guess-input', '40');
   await A.page.click('#guess-btn');
   await A.page.waitForSelector('#guess-sent:not([hidden])');
@@ -123,7 +137,8 @@ const step = (m) => console.log('✓', m);
 
   await A.page.click('#guess-btn');
   await host('rounds/1/reveal');
-  for (const p of [A, B, C]) await only(p.page, 'result');
+  for (const p of [A, B, C, E]) await only(p.page, 'result');
+  await E.page.waitForSelector('#res-you:not([hidden])');
   await A.page.waitForSelector('#res-you:not([hidden])');
   assert.strictEqual(await A.page.textContent('#res-guess'), '36%');
   assert.strictEqual(await A.page.locator('.bar').count(), 4);

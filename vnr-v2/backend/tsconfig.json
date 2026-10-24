@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "rootDir": "..",
+    "outDir": "../dist-backend",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "../src/game/**/*.ts", "../src/shared/**/*.ts"]
+}

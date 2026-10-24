@@ -48,10 +48,10 @@ export function positionOf(seat: number, progress: number, memberIdx: number, fi
   return lanePoint(seat, Math.min(progress, finish) - RING_MAX);
 }
 
-export interface BoardHorse { id: string; name: string; progress: number; memberIdx: number; acting: boolean }
+export interface BoardHorse { id: string; name: string; progress: number; memberIdx: number; acting: boolean; frozen?: boolean; cap?: number | null }
 export interface BoardTeam {
   teamId: string; seat: number; color: TeamColor; name: string; handCount: number;
-  active: boolean; shield: boolean; stunned: boolean; horses: BoardHorse[];
+  active: boolean; shield: boolean; horses: BoardHorse[];
 }
 export interface BoardFx { id: number; kicked: string[]; at: [number, number] | null }
 
@@ -77,7 +77,7 @@ const PROPS: { e: string; x: number; y: number; s: number }[] = [
   { e: '🏡', x: 94, y: 90, s: 1.6 }, { e: '🌳', x: 86, y: 95, s: 1.3 }, { e: '🌼', x: 96, y: 64, s: .8 }, { e: '🪨', x: 95, y: 40, s: .9 }, { e: '🌷', x: 94, y: 52, s: .8 }
 ];
 
-export function Board({ teams, fx, center, finish = FINISH }: { teams: BoardTeam[]; fx?: BoardFx | null; center?: ReactNode; finish?: number }) {
+export function Board({ teams, fx, center, highlight, finish = FINISH }: { teams: BoardTeam[]; fx?: BoardFx | null; center?: ReactNode; highlight?: string | null; finish?: number }) {
   const bySeat = new Map(teams.map((t) => [t.seat, t]));
   const all = teams.flatMap((t) => t.horses.map((h) => ({ t, h })));
   const groups = new Map<string, string[]>();
@@ -162,7 +162,7 @@ export function Board({ teams, fx, center, finish = FINISH }: { teams: BoardTeam
             return (
               <div key={`tc${t.teamId}`}>
                 <span className={`team-tag${t.active ? ' active' : ''}`} style={{ left: `${(outward[0] / VB) * 100}%`, top: `${(outward[1] / VB) * 100}%`, '--c': COLOR_HEX[t.color] } as CSSProperties}>
-                  {t.name}{t.shield ? ' 🛡️' : ''}{t.stunned ? ' 💤' : ''}
+                  {t.name} · 🃏{t.handCount}{t.shield ? ' 🛡️' : ''}
                 </span>
                 {t.handCount > 0 && (
                   <span className="team-cards" style={{ left: `${(inward[0] / VB) * 100}%`, top: `${(inward[1] / VB) * 100}%` }} title={`${t.handCount} thẻ kỹ năng`}>
@@ -177,9 +177,10 @@ export function Board({ teams, fx, center, finish = FINISH }: { teams: BoardTeam
             const group = groups.get(`${Math.round(x)}:${Math.round(y)}`)!;
             const dx = h.progress === 0 ? 0 : (group.indexOf(h.id) - (group.length - 1) / 2) * 10;
             return (
-              <div key={h.id} className={`pawn${h.acting && t.active ? ' active' : ''}${kicked.has(h.id) ? ' kicked' : ''}${h.progress === 0 ? ' idle' : ''}`}
+              <div key={h.id} className={`pawn${h.acting && t.active ? ' active' : ''}${kicked.has(h.id) ? ' kicked' : ''}${highlight === h.id ? ' target' : ''}${h.progress === 0 ? ' idle' : ''}`}
                 title={`${h.name} (${t.name}): ${h.progress}/${finish}`}
                 style={{ left: `${((x + dx) / VB) * 100}%`, top: `${(y / VB) * 100}%`, '--c': COLOR_HEX[t.color], zIndex: Math.round(y) } as CSSProperties}>
+                {(h.frozen || (h.cap ?? null) !== null) && <span className="pawn-badge">{h.frozen ? '❄️' : '🚧'}</span>}
                 <HorseIcon />
                 <span className="pawn-name">{h.name}</span>
               </div>

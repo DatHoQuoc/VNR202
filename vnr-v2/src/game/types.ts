@@ -37,7 +37,13 @@ export interface ActiveQuestion {
 export interface Member { id: string; name: string }
 
 /** One horse per team member. progress: 0 = in the stable, 1..RING_MAX ring, then the home lane, FINISH = home. */
-export interface Horse { id: string; memberId: string; name: string; progress: number }
+export interface Horse {
+  id: string; memberId: string; name: string; progress: number;
+  /** Owner loses their next turn (Chia Để Trị). */
+  frozen: boolean;
+  /** This horse's next move is limited to this many steps (Thuế Khóa). */
+  cap: number | null;
+}
 
 /** A team (slot 1-6): shared hand of skill cards, one horse per member. */
 export interface PlayerState {
@@ -48,9 +54,6 @@ export interface PlayerState {
   /** Index into members of whoever acted last; the next turn goes to the following member. */
   actingIdx: number;
   hand: SkillCard[];
-  stunned: boolean;
-  /** Next move is limited to this many steps (Thuế Khóa). */
-  cap: number | null;
   boost: number;
   doubleDice: boolean;
   shield: boolean;
@@ -84,6 +87,19 @@ export interface Resolution {
   boost: number;
 }
 
+/** One skill card played, kept so everybody can see who used what on whom. */
+export interface SkillUse {
+  id: number;
+  turn: number;
+  kind: SkillKind;
+  teamId: string;
+  memberName: string;
+  targetTeamId?: string;
+  targetHorseId?: string;
+  targetName?: string;
+  blocked: boolean;
+}
+
 export interface GameEvent { id: number; at: number; type: string; text: string; teamId?: string; targetId?: string }
 
 export type Phase = 'roll' | 'question' | 'finished';
@@ -104,7 +120,7 @@ export interface GameState {
   streak: number;
   winHome: number;
   exitRolls: number[];
-  lastSkill: { id: number; kind: SkillKind; teamId: string; targetId?: string; blocked: boolean } | null;
+  skillLog: SkillUse[];
   players: Record<string, PlayerState>;
   skillDeck: SkillCard[];
   skillDiscard: SkillCard[];
@@ -125,4 +141,4 @@ export interface GameState {
 export type GameAction =
   | { type: 'roll' }
   | { type: 'answer'; index: number }
-  | { type: 'play-skill'; cardId: string; targetId?: string };
+  | { type: 'play-skill'; cardId: string; targetHorseId?: string };

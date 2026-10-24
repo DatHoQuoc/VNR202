@@ -25,7 +25,7 @@ while (turns < 600) {
   const cmd = (action) => req(`/api/rooms/${code}/command`, { method: 'POST', headers: { ...J, cookie: t.cookie }, body: JSON.stringify({ command: { type: 'game', action } }) });
   const mine = (await req(`/api/rooms/${code}`, { headers: { cookie: t.cookie } })).body;
   const roll = mine.hand.find((c) => ['stun', 'barricade', 'push-back'].includes(c.kind));
-  if (roll && !mine.game.skillUsed) { const foe = mine.game.order.find((o) => o !== t.id); await cmd({ type: 'play-skill', cardId: roll.id, targetId: foe }); }
+  if (roll && !mine.game.skillUsed) { const foe = mine.game.order.find((o) => o !== t.id); await cmd({ type: 'play-skill', cardId: roll.id, targetHorseId: mine.game.players[foe].horses[0].id }); }
   await cmd({ type: 'roll' });
   await cmd({ type: 'answer', index: Math.floor(Math.random() * 4) });
   turns++;

@@ -170,66 +170,79 @@ test('winHome = 2 needs two horses home; the next member with an unfinished hors
   assert.equal(g.winnerId, 't1');
 });
 
-test('skills: stun makes a team lose its next turn; only one pre-roll card per turn', () => {
+test('skills: stun freezes one horse, its owner loses their next turn; only one pre-roll card per turn', () => {
   let s = newGame(3);
   const a = give(s, 't1', 'stun', 'a');
   const b = give(s, 't1', 'stun', 'b');
-  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: a, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK);
-  assert.equal(s.players.t2.stunned, true);
-  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: b, targetId: 't3' }, 2_100, seeded(), QUESTION_BANK), /1 thẻ/);
+  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: a, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK);
+  assert.equal(horseOf(s, 't2').frozen, true);
+  assert.equal(s.skillLog.at(-1)?.kind, 'stun');
+  assert.equal(s.skillLog.at(-1)?.targetName, 'T2-1');
+  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: b, targetHorseId: 'h-t3m1' }, 2_100, seeded(), QUESTION_BANK), /1 thẻ/);
   s = play(s, 2);
   assert.equal(s.turnTeamId, 't3');
-  assert.equal(s.players.t2.stunned, false);
+  assert.equal(horseOf(s, 't2').frozen, false);
+});
+
+test('a frozen member is skipped but teammates still play', () => {
+  let s = newGame(2, 2);
+  horseOf(s, 't1', 2).frozen = true;
+  s = play(s, 2);                       // t1m1 plays
+  s = play(s, 2);                       // t2m1 plays
+  assert.equal(s.turnTeamId, 't1');
+  assert.equal(s.actingMemberId, 't1m1', 'frozen t1m2 is skipped');
+  assert.equal(horseOf(s, 't1', 2).frozen, false);
 });
 
 test('skills: barricade caps the next move; boost adds 3', () => {
   let s = newGame(2);
   horseOf(s, 't1').progress = 3; horseOf(s, 't2').progress = 3;
-  s.players.t2.cap = 2;
+  horseOf(s, 't2').cap = 2;
   s.players.t1.boost = 3;
   s = play(s, 2);
   assert.equal(horseOf(s, 't1').progress, 8);
   s = play(s, 6);
   assert.equal(horseOf(s, 't2').progress, 5);
   assert.equal(s.resolution?.capped, true);
-  assert.equal(s.players.t2.cap, null);
+  assert.equal(horseOf(s, 't2').cap, null);
 });
 
 test('skills: push-back, swap and steal obey their conditions', () => {
   let s = newGame(3);
   horseOf(s, 't2').progress = 10;
   const pb = give(s, 't1', 'push-back');
-  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetId: 't3' }, 2_000, seeded(), QUESTION_BANK), /vòng đua/);
-  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetId: 't1' }, 2_000, seeded(), QUESTION_BANK), /đối thủ/);
-  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK);
+  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetHorseId: 'h-t3m1' }, 2_000, seeded(), QUESTION_BANK), /vòng đua/);
+  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: pb }, 2_000, seeded(), QUESTION_BANK), /ngựa/);
+  assert.throws(() => applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetHorseId: 'h-t1m1' }, 2_000, seeded(), QUESTION_BANK), /đối thủ/);
+  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: pb, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK);
   assert.equal(horseOf(s, 't2').progress, 6);
 
   let w = newGame(2);
   horseOf(w, 't1').progress = 2; horseOf(w, 't2').progress = 15;
   const cellMine = ringCell(0, 2), cellTheirs = ringCell(1, 15);
   const sw = give(w, 't1', 'swap');
-  w = applyAction(w, 't1m1', { type: 'play-skill', cardId: sw, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK);
+  w = applyAction(w, 't1m1', { type: 'play-skill', cardId: sw, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK);
   assert.equal(ringCell(0, horseOf(w, 't1').progress), cellTheirs);
   assert.equal(ringCell(1, horseOf(w, 't2').progress), cellMine);
 
   let t = newGame(2);
   const st = give(t, 't1', 'steal');
-  assert.throws(() => applyAction(t, 't1m1', { type: 'play-skill', cardId: st, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK), /chưa có thẻ/);
+  assert.throws(() => applyAction(t, 't1m1', { type: 'play-skill', cardId: st, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK), /chưa có thẻ/);
   give(t, 't2', 'shield', 'victim');
-  t = applyAction(t, 't1m1', { type: 'play-skill', cardId: st, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK);
+  t = applyAction(t, 't1m1', { type: 'play-skill', cardId: st, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK);
   assert.equal(t.players.t2.hand.length, 0);
   assert.deepEqual(t.players.t1.hand.map((c) => c.id), ['victim']);
-  assert.equal(t.lastSkill?.kind, 'steal');
+  assert.equal(t.skillLog.at(-1)?.kind, 'steal');
 });
 
 test('shield blocks exactly one hostile skill', () => {
   let s = newGame(2);
   s.players.t2.shield = true;
   const a = give(s, 't1', 'stun', 'a');
-  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: a, targetId: 't2' }, 2_000, seeded(), QUESTION_BANK);
-  assert.equal(s.players.t2.stunned, false);
+  s = applyAction(s, 't1m1', { type: 'play-skill', cardId: a, targetHorseId: 'h-t2m1' }, 2_000, seeded(), QUESTION_BANK);
+  assert.equal(horseOf(s, 't2').frozen, false);
   assert.equal(s.players.t2.shield, false);
-  assert.equal(s.lastSkill?.blocked, true);
+  assert.equal(s.skillLog.at(-1)?.blocked, true);
 });
 
 test('question skills: hint and fifty only work during a question', () => {
@@ -287,7 +300,7 @@ test('random 6-team games with 1-6 members each always finish with a winner', ()
       const card = s.players[id].hand.find((c) => ['stun', 'barricade', 'boost', 'shield', 'push-back'].includes(c.kind));
       if (card && s.phase === 'roll' && !s.skillUsed) {
         const enemy = s.order.find((t) => t !== id)!;
-        try { s = applyAction(s, s.actingMemberId, { type: 'play-skill', cardId: card.id, targetId: enemy }, now, rng, QUESTION_BANK); } catch { /* invalid target, skip */ }
+        try { s = applyAction(s, s.actingMemberId, { type: 'play-skill', cardId: card.id, targetHorseId: `h-${enemy}m1` }, now, rng, QUESTION_BANK); } catch { /* invalid target, skip */ }
       }
       s = applyAction(s, s.actingMemberId, { type: 'roll' }, now, rng, QUESTION_BANK);
       s = applyAction(s, s.actingMemberId, { type: 'answer', index: rng() < 0.6 ? correctIndex(s) : wrongIndex(s) }, now, rng, QUESTION_BANK);

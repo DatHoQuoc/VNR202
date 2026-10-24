@@ -181,3 +181,23 @@ input:not([type=range]) { width:100%; border:1px solid #cbd4c9; background:#fffe
 .slot-actions { display:flex; justify-content:flex-end; gap:10px; min-height:36px; } .slot .btn { min-height:36px; padding:6px 14px; font-size:13px; }
 .score-name small { display:block; color:var(--muted); font-size:11px; }
 .log li.kick { color:#b3261e; font-weight:600; } .kick-text { color:#b3261e; }
+
+/* skill reveal, log, target picker, card counts */
+.board-wrap .reveal { position:absolute; inset:0; z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:#0c2a4488; backdrop-filter:blur(2px); animation:reveal-in .4s ease-out; pointer-events:none; }
+.reveal .game-card.big { animation:reveal-card .7s cubic-bezier(.2,1.2,.3,1); box-shadow:0 22px 50px #000a; }
+.reveal-text { background:#fffdf8; border-radius:14px; padding:10px 18px; font-size:15px; max-width:80%; text-align:center; box-shadow:0 8px 24px #0006; } .reveal-text em { color:#b3261e; font-style:normal; font-weight:800; }
+@keyframes reveal-in { from { opacity:0; } } @keyframes reveal-card { from { transform:translateY(120px) rotate(-14deg) scale(.3); opacity:0; } }
+.skill-log ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; font-size:13px; } .skill-log li { display:flex; gap:10px; align-items:flex-start; padding:6px 8px; border-radius:10px; background:#f6f2e6; } .skill-log li.blocked { background:#fbe9e6; } .log-icon { font-size:22px; line-height:1; }
+.score-hand { display:flex; align-items:center; justify-content:flex-end; gap:5px; font-size:12px; min-width:92px; white-space:nowrap; } .score-hand b { font-size:16px; color:var(--green); }
+.pawn.target { z-index:1500!important; animation:pawn-hop .5s ease-in-out infinite; } .pawn.target .horse-svg { filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px #ffe14a) drop-shadow(0 0 18px #ff5a1a); }
+.pawn.target::after { content:"🎯"; position:absolute; left:50%; top:-34%; transform:translateX(-50%); font-size:24px; }
+.pawn-badge { position:absolute; right:-24%; top:-14%; font-size:16px; z-index:2; }
+.picker { margin-top:14px; border:2px solid var(--gold); border-radius:16px; background:#fffaf0; padding:14px; box-shadow:0 10px 30px #5f4a2a30; animation:pop .25s; }
+.picker-head { display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:start; } .picker-head h3 { font-family:var(--serif); font-size:20px; margin:0 0 4px; } .picker-head p { margin:0 0 4px; font-size:13px; }
+.picker-head .game-card { width:112px; min-height:0; height:150px; margin:0; } .picker-head .card-art { height:50px; font-size:28px; } .picker-head .card-body span,.picker-head .card-body em { display:none; }
+.picker-teams { display:grid; gap:10px; margin-top:12px; }
+.picker-team { border:2px solid; border-radius:12px; padding:8px 10px; background:#fff; } .picker-team-head { display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:6px; } .picker-team-head span { margin-left:auto; font-size:12px; color:var(--muted); } .picker-team-head i { width:12px; height:12px; border-radius:50%; }
+.picker-horses { display:flex; flex-wrap:wrap; gap:8px; }
+.picker-horse { --c:#888; display:grid; grid-template-columns:34px 1fr; grid-template-rows:auto auto auto; column-gap:8px; text-align:left; min-width:150px; padding:6px 10px; border-radius:10px; border:2px solid var(--c); background:color-mix(in srgb,var(--c) 10%,#fff); }
+.picker-horse .mini-horse { grid-row:1/4; width:34px; height:44px; align-self:center; } .picker-horse b { font-size:13px; } .picker-horse small { color:var(--muted); font-size:11px; } .picker-horse em { font-size:11px; color:#b3261e; font-style:normal; }
+.picker-horse:hover:not(:disabled) { transform:translateY(-3px); box-shadow:0 8px 16px #0003; background:color-mix(in srgb,var(--c) 24%,#fff); }

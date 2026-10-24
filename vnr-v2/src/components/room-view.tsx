@@ -51,6 +51,9 @@ export function RoomView({ code, projector = false }: { code: string; projector?
   const [pending, setPending] = useState<SkillCard | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [fx, setFx] = useState<BoardFx | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<NonNullable<View['game']>['skillLog'][number] | null>(null);
+  const seenSkill = useRef<number | null | undefined>(undefined);
   const seenResolution = useRef<number | null | undefined>(undefined);
   useEffect(() => { try { setPlayerName(localStorage.getItem('vnr_player') ?? ''); } catch { /* storage unavailable */ } }, []);
   const rename = (v: string) => { setPlayerName(v); try { localStorage.setItem('vnr_player', v); } catch { /* ignore */ } };
@@ -70,6 +73,19 @@ export function RoomView({ code, projector = false }: { code: string; projector?
     const t = setTimeout(() => setFx(null), 2200);
     return () => clearTimeout(t);
   }, [res, view?.game]);
+
+  // Reveal every skill card played to the whole table for a few seconds (not the ones already in the log at load).
+  const skillLog = view?.game?.skillLog;
+  useEffect(() => {
+    if (!skillLog) return;
+    const last = skillLog.at(-1) ?? null;
+    if (seenSkill.current === undefined) { seenSkill.current = last?.id ?? null; return; }
+    if (!last || last.id === seenSkill.current) return;
+    seenSkill.current = last.id;
+    setReveal(last);
+    const t = setTimeout(() => setReveal(null), 3600);
+    return () => clearTimeout(t);
+  }, [skillLog]);
 
   const teamsById = useMemo(() => Object.fromEntries((view?.teams ?? []).map((t) => [t.id, t])), [view?.teams]);
   if (!view) return <main className="center-note">{error ? <><p className="error">{error}</p><Link className="btn" href="/">Về trang chủ</Link></> : 'Đang kết nối phòng…'}</main>;
@@ -105,7 +121,7 @@ export function RoomView({ code, projector = false }: { code: string; projector?
     const canPick = view.viewer.role !== 'host' && !projector;
     const filled = view.teams.filter((t) => t.members.length > 0).length;
     const boardTeams: BoardTeam[] = view.teams.map((t) => ({
-      teamId: t.id, seat: t.slot, color: t.color, name: t.name, handCount: 0, active: false, shield: false, stunned: false,
+      teamId: t.id, seat: t.slot, color: t.color, name: t.name, handCount: 0, active: false, shield: false,
       horses: t.members.map((m, i) => ({ id: `h-${m.id}`, name: m.name, progress: 0, memberIdx: i, acting: false }))
     })).filter((t) => t.horses.length > 0);
     return (
@@ -174,8 +190,8 @@ export function RoomView({ code, projector = false }: { code: string; projector?
     const p = g.players[id];
     return {
       teamId: id, seat: p.seat, color: teamsById[id].color, name: teamName(id), handCount: p.handCount,
-      active: id === turnTeam && g.phase !== 'finished', shield: p.shield, stunned: p.stunned,
-      horses: p.horses.map((h) => ({ id: h.id, name: h.name, progress: h.progress, memberIdx: p.members.findIndex((m) => m.id === h.memberId), acting: h.memberId === g.actingMemberId }))
+      active: id === turnTeam && g.phase !== 'finished', shield: p.shield,
+      horses: p.horses.map((h) => ({ id: h.id, name: h.name, progress: h.progress, memberIdx: p.members.findIndex((m) => m.id === h.memberId), acting: h.memberId === g.actingMemberId, frozen: h.frozen, cap: h.cap }))
     };
   });
 
@@ -188,21 +204,19 @@ export function RoomView({ code, projector = false }: { code: string; projector?
     return null;
   };
   const use = (card: SkillCard) => (skillByKind[card.kind].target === 'enemy' ? setPending(pending?.id === card.id ? null : card) : run({ type: 'game', action: { type: 'play-skill', cardId: card.id } }));
-  const targetOk = (card: SkillCard, id: string): string | null => {
-    const t = g.players[id];
-    const ring = t.horses.filter((h) => h.progress >= 1 && h.progress <= RING_MAX);
-    if (card.kind === 'stun' && t.stunned) return 'Đã bị mất lượt';
-    if (card.kind === 'barricade' && t.cap !== null) return 'Đã bị Thuế Khóa';
-    if (card.kind === 'push-back' && !ring.length) return 'Không có ngựa trên vòng đua';
-    if (card.kind === 'swap') {
-      const mine = actorHorse && actorHorse.progress >= 1 && actorHorse.progress <= RING_MAX;
-      if (!ring.length || !mine) return 'Cần cả hai ngựa trên vòng đua';
-    }
-    if (card.kind === 'steal' && t.handCount === 0) return 'Chưa có thẻ nào';
+  const horseOk = (card: SkillCard, tid: string, h: Game['players'][string]['horses'][number]): string | null => {
+    const ring = (x: { progress: number }) => x.progress >= 1 && x.progress <= RING_MAX;
+    if (h.progress >= g.finish) return 'Đã về đích';
+    if (card.kind === 'stun' && h.frozen) return 'Đã bị mất lượt';
+    if (card.kind === 'barricade' && h.progress === 0) return 'Còn ở chuồng';
+    if (card.kind === 'barricade' && h.cap !== null) return 'Đã bị Thuế Khóa';
+    if (card.kind === 'push-back' && !ring(h)) return h.progress === 0 ? 'Còn ở chuồng' : 'Đang ở đường về nhà';
+    if (card.kind === 'swap' && (!ring(h) || !actorHorse || !ring(actorHorse))) return !actorHorse || !ring(actorHorse) ? 'Ngựa của bạn chưa ở vòng đua' : h.progress === 0 ? 'Còn ở chuồng' : 'Đang ở đường về nhà';
+    if (card.kind === 'steal' && g.players[tid].handCount === 0) return 'Đội này chưa có thẻ';
     return null;
   };
 
-  const lastSkill = g.lastSkill;
+  const lastSkill = g.skillLog.at(-1) ?? null;
   const standings = [...g.order].sort((a, b) => g.players[b].home - g.players[a].home || g.players[b].lead - g.players[a].lead);
 
   return (
@@ -210,14 +224,20 @@ export function RoomView({ code, projector = false }: { code: string; projector?
       <main className={`shell game${projector ? ' projector' : ''}`}>
         <section className="left">
           <div className="panel board-wrap">
-            <Board teams={boardTeams} fx={fx} finish={g.finish} center={<Die value={g.dice} rolling={rolling} />} />
+            <Board teams={boardTeams} fx={fx} highlight={hover} finish={g.finish} center={<Die value={g.dice} rolling={rolling} />} />
+            {reveal && (
+              <div key={reveal.id} className="reveal" role="status">
+                <SkillCardView kind={reveal.kind} big style={{ '--rot': '0deg', '--lift': '0px' } as CSSProperties} />
+                <div className="reveal-text"><b style={{ color: tint(reveal.teamId) }}>{teamName(reveal.teamId)}</b> ({reveal.memberName}) dùng <b>{skillByKind[reveal.kind].name}</b>{reveal.targetName ? <> lên ngựa <b>{reveal.targetName}</b> của <b style={{ color: tint(reveal.targetTeamId) }}>{teamName(reveal.targetTeamId)}</b></> : null}{reveal.blocked ? <em> · bị Khiên chặn!</em> : null}</div>
+              </div>
+            )}
             <div className="tray">
               <div className="tray-slot"><span className="tray-label">BỘ BÀI</span><div className="deck-pile">{Array.from({ length: Math.min(4, Math.ceil(g.deckCount / 6)) }, (_, i) => <i key={i} className="card-back" style={{ '--i': i } as CSSProperties} />)}</div><small>{g.deckCount} lá</small></div>
               <div className="tray-slot wide">
                 <span className="tray-label">THẺ VỪA DÙNG</span>
                 {lastSkill ? (
                   <div key={lastSkill.id} className="played"><SkillCardView kind={lastSkill.kind} style={{ '--rot': '0deg', '--lift': '0px' } as CSSProperties} />
-                    <small><b style={{ color: tint(lastSkill.teamId) }}>{teamName(lastSkill.teamId)}</b>{lastSkill.targetId ? <> → <b style={{ color: tint(lastSkill.targetId) }}>{teamName(lastSkill.targetId)}</b></> : null}{lastSkill.blocked ? ' (bị khiên chặn)' : ''}</small></div>
+                    <small><b style={{ color: tint(lastSkill.teamId) }}>{teamName(lastSkill.teamId)}</b>{lastSkill.targetName ? <> → ngựa <b>{lastSkill.targetName}</b> ({teamName(lastSkill.targetTeamId)})</> : null}{lastSkill.blocked ? ' (bị khiên chặn)' : ''}</small></div>
                 ) : <small className="muted">Chưa có thẻ nào được dùng</small>}
               </div>
               <div className="tray-slot"><span className="tray-label">XUẤT CHUỒNG</span><b className="exit-rule">🎲 {g.exitRolls.join(' / ')}</b><small>Về đích: {g.winHome} ngựa</small></div>
@@ -273,20 +293,14 @@ export function RoomView({ code, projector = false }: { code: string; projector?
           {mineTeam && g.phase !== 'finished' && (
             <div className="panel hand">
               <div className="panel-head"><h2>Thẻ kỹ năng của đội ({hand.length}/5)</h2>
-                <div className="status-icons">{mineTeam.shield && <span>🛡️ Khiên</span>}{mineTeam.boost > 0 && <span>🚩 +{mineTeam.boost}</span>}{mineTeam.doubleDice && <span>🎲 x2</span>}{mineTeam.cap !== null && <span>🚧 tối đa {mineTeam.cap}</span>}{mineTeam.stunned && <span>💤 mất lượt</span>}</div></div>
+                <div className="status-icons">{mineTeam.shield && <span>🛡️ Khiên</span>}{mineTeam.boost > 0 && <span>🚩 +{mineTeam.boost}</span>}{mineTeam.doubleDice && <span>🎲 x2</span>}{mineTeam.horses.filter((h) => h.frozen).map((h) => <span key={h.id}>❄️ {h.name} mất lượt</span>)}{mineTeam.horses.filter((h) => h.cap !== null).map((h) => <span key={h.id}>🚧 {h.name} tối đa {h.cap}</span>)}</div></div>
               {hand.length === 0 ? <p className="muted">Chưa có thẻ. Trả lời đúng để đội nhận thẻ kỹ năng mới.</p> : (
                 <div className="hand-fan">{hand.map((c, i) => { const off = i - (hand.length - 1) / 2; return <SkillCardView key={c.id} card={c} disabledReason={reason(c)} selected={pending?.id === c.id} onUse={() => use(c)} style={{ '--rot': `${off * 4}deg`, '--lift': `${Math.abs(off) * 7}px` } as CSSProperties} />; })}</div>
               )}
               {pending && (
-                <div className="targets">
-                  <p>Chọn đội để dùng <b>{skillByKind[pending.kind].name}</b>:</p>
-                  {g.order.filter((id) => id !== meTeam).map((id) => {
-                    const bad = targetOk(pending, id);
-                    return <button key={id} className="target" disabled={!!bad || busy} title={bad ?? ''} style={{ borderColor: tint(id) }} onClick={() => run({ type: 'game', action: { type: 'play-skill', cardId: pending.id, targetId: id } })}>
-                      <i style={{ background: tint(id) }} />{teamName(id)} <small>{g.players[id].home}/{Math.min(g.winHome, g.players[id].horses.length)} về đích{g.players[id].shield ? ' · 🛡️' : ''}{bad ? ` · ${bad}` : ''}</small></button>;
-                  })}
-                  <button className="text-link" onClick={() => setPending(null)}>Hủy</button>
-                </div>
+                <TargetPicker card={pending} game={g} meTeam={meTeam!} tint={tint} teamName={teamName} horseOk={horseOk} busy={busy}
+                  onHover={setHover} onCancel={() => { setPending(null); setHover(null); }}
+                  onPick={(horseId) => { setHover(null); run({ type: 'game', action: { type: 'play-skill', cardId: pending.id, targetHorseId: horseId } }); }} />
               )}
             </div>
           )}
@@ -314,10 +328,26 @@ export function RoomView({ code, projector = false }: { code: string; projector?
                   <span className="score-name">{teamName(id)}{id === meTeam ? ' (đội bạn)' : ''}<small>{p.members.length} ngựa</small></span>
                   <span className="bar"><span style={{ width: `${(p.lead / g.finish) * 100}%`, background: tint(id) }} /></span>
                   <span className="score-num">🏁 {p.home}/{need}</span>
-                  <span className="score-meta"><span className="score-cards">{Array.from({ length: p.handCount }, (_, i) => <i key={i} className="card-back" />)}</span>{p.shield ? ' 🛡️' : ''}{p.stunned ? ' 💤' : ''}{p.cap !== null ? ' 🚧' : ''}</span>
+                  <span className="score-hand" title="Số thẻ kỹ năng đang giữ"><span className="score-cards">{Array.from({ length: Math.min(p.handCount, 5) }, (_, i) => <i key={i} className="card-back" />)}</span><b>{p.handCount}</b> thẻ{p.shield ? ' 🛡️' : ''}</span>
                 </div>
               );
             })}
+          </div>
+
+          <div className="panel skill-log">
+            <h2>Thẻ kỹ năng đã dùng</h2>
+            {g.skillLog.length === 0 ? <p className="muted small">Chưa đội nào dùng thẻ.</p> : (
+              <ul>
+                {[...g.skillLog].reverse().slice(0, 8).map((u) => (
+                  <li key={u.id} className={u.blocked ? 'blocked' : ''}>
+                    <span className="log-icon">{skillByKind[u.kind].icon}</span>
+                    <span><b style={{ color: tint(u.teamId) }}>{teamName(u.teamId)}</b> ({u.memberName}) dùng <b>{skillByKind[u.kind].name}</b>
+                      {u.targetName ? <> lên ngựa <b>{u.targetName}</b> của <b style={{ color: tint(u.targetTeamId) }}>{teamName(u.targetTeamId)}</b></> : <> cho đội mình</>}
+                      {u.blocked ? ' — bị khiên chặn' : ''} <small className="muted">· lượt {u.turn}</small></span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="panel log">
@@ -342,5 +372,54 @@ export function RoomView({ code, projector = false }: { code: string; projector?
         {error && <p className="toast error" role="alert">{error}</p>}
       </main>
     </>
+  );
+}
+
+function TargetPicker({ card, game, meTeam, tint, teamName, horseOk, busy, onHover, onCancel, onPick }: {
+  card: SkillCard; game: Game; meTeam: string; tint: (id?: string) => string; teamName: (id?: string) => string;
+  horseOk: (card: SkillCard, teamId: string, h: Game['players'][string]['horses'][number]) => string | null;
+  busy: boolean; onHover: (id: string | null) => void; onCancel: () => void; onPick: (horseId: string) => void;
+}) {
+  const def = skillByKind[card.kind];
+  const steal = card.kind === 'steal';
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, []);
+  return (
+    <div ref={ref} className="picker" role="dialog" aria-label={`Chọn mục tiêu cho ${def.name}`}>
+      <div className="picker-head">
+        <SkillCardView kind={card.kind} style={{ '--rot': '0deg', '--lift': '0px' } as CSSProperties} />
+        <div>
+          <p className="eyebrow">CHỌN MỤC TIÊU</p>
+          <h3>{def.icon} {def.name}</h3>
+          <p>{def.description}</p>
+          <p className="muted small">{steal ? 'Chọn đội muốn lấy thẻ (bấm vào ngựa bất kỳ của đội).' : 'Bấm vào con ngựa bạn muốn tác động. Rê chuột để thấy ngựa sáng lên trên bàn cờ.'} Đội có 🛡️ sẽ chặn thẻ này.</p>
+        </div>
+        <button className="text-link" onClick={onCancel}>Hủy</button>
+      </div>
+      <div className="picker-teams">
+        {game.order.filter((id) => id !== meTeam).map((id) => {
+          const p = game.players[id];
+          return (
+            <div key={id} className="picker-team" style={{ borderColor: tint(id) }}>
+              <div className="picker-team-head"><i style={{ background: tint(id) }} /><b>{teamName(id)}</b><span>🃏 {p.handCount} thẻ{p.shield ? ' · 🛡️ có khiên' : ''}</span></div>
+              <div className="picker-horses">
+                {p.horses.map((h) => {
+                  const bad = horseOk(card, id, h);
+                  const where = h.progress === 0 ? 'ở chuồng' : h.progress >= game.finish ? 'đã về đích' : h.progress <= RING_MAX ? `ô ${h.progress}/${RING_MAX}` : `đường về nhà ${h.progress - RING_MAX}/4`;
+                  return (
+                    <button key={h.id} className="picker-horse" disabled={!!bad || busy} onMouseEnter={() => onHover(h.id)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(h.id)} onBlur={() => onHover(null)}
+                      style={{ '--c': tint(id) } as CSSProperties} onClick={() => onPick(h.id)} title={bad ?? `Dùng lên ngựa của ${h.name}`}>
+                      <span className="mini-horse"><HorseIcon /></span>
+                      <b>{h.name}</b><small>{where}{h.frozen ? ' · ❄️' : ''}{h.cap !== null ? ' · 🚧' : ''}</small>
+                      {bad && <em>{bad}</em>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

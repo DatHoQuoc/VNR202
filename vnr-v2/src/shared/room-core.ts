@@ -157,14 +157,14 @@ export function projectRoom(room: RoomRecord, viewer: Viewer) {
       phase: g.phase, deadline: g.deadline, paused: g.paused, pausedRemaining: g.pausedRemaining, finish: g.finish,
       order: g.order, turnTeamId: g.turnTeamId, actingMemberId: g.actingMemberId, turnNumber: g.turnNumber, dice: g.dice,
       skillUsed: g.skillUsed, winHome: g.winHome, exitRolls: g.exitRolls, streak: g.streak,
-      deckCount: g.skillDeck.length, lastSkill: g.lastSkill,
+      deckCount: g.skillDeck.length, skillLog: g.skillLog.slice(-12),
       question: g.question && {
         id: g.question.id, text: g.question.text, options: g.question.options, removed: g.question.removed,
         hint: g.question.hintShown ? hintFor(g.question.id) : null
       },
       resolution: g.resolution, events: g.events.slice(-30), winnerId: g.winnerId, ranking: g.ranking, endedBy: g.endedBy,
       players: Object.fromEntries(Object.values(g.players).map((p) => [p.teamId, {
-        seat: p.seat, members: p.members, horses: p.horses, handCount: p.hand.length, stunned: p.stunned, cap: p.cap, boost: p.boost,
+        seat: p.seat, members: p.members, horses: p.horses, handCount: p.hand.length, boost: p.boost,
         doubleDice: p.doubleDice, shield: p.shield, correct: p.correct, answered: p.answered,
         home: homeCount(p, g.finish), lead: Math.max(0, ...p.horses.map((h) => h.progress))
       }]))

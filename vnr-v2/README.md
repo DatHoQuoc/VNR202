@@ -19,18 +19,18 @@ Nguồn luật tham khảo: [mytour.vn](https://mytour.vn/vi/blog/bai-viet/co-du
 
 | Thẻ | Loại | Hiệu ứng | Gắn với nội dung bài |
 |---|---|---|---|
-| ✂️ Chia Để Trị ×3 | Chặn đối thủ | Đội bị chọn **mất lượt** kế tiếp | Pháp chia ba kỳ |
-| 🚧 Thuế Khóa Nặng Nề ×3 | Chặn đối thủ | Lần đi kế tiếp của đối thủ **tối đa 2 bước** | Thuế khóa, bóc lột |
-| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Ngựa đang dẫn đầu của đội đó lùi 4 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
-| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** ngựa đang chơi của bạn với ngựa dẫn đầu của đội đó (cả hai trên vòng đua) | Đổi thay khi có đường lối đúng |
-| 🕵️ Mua Chuộc ×2 | Chặn đối thủ | **Lấy ngẫu nhiên 1 thẻ** trên tay đối thủ | Sarraut mua chuộc Nguyễn Ái Quốc |
+| ✂️ Chia Để Trị ×3 | Chặn đối thủ | Chủ của **con ngựa được chọn** mất lượt kế tiếp của họ | Pháp chia ba kỳ |
+| 🚧 Thuế Khóa Nặng Nề ×3 | Chặn đối thủ | Lần đi kế tiếp của **con ngựa được chọn** tối đa 2 bước | Thuế khóa, bóc lột |
+| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Con ngựa được chọn lùi 4 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
+| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** ngựa đang chơi của bạn với ngựa được chọn (cả hai trên vòng đua) | Đổi thay khi có đường lối đúng |
+| 🕵️ Mua Chuộc ×2 | Chặn đối thủ | **Lấy ngẫu nhiên 1 thẻ** từ tay đội của ngựa được chọn | Sarraut mua chuộc Nguyễn Ái Quốc |
 | 🚩 Đường Cách Mệnh ×3 | Tự thân | Lần đi kế tiếp **+3 bước** | Tác phẩm *Đường cách mệnh* |
 | 🎲 Nhãn Quan Sắc Bén ×2 | Tự thân | Đổ 2 xúc xắc, lấy số cao | Nhãn quan chính trị sắc bén |
 | 🛡️ Chủ Nghĩa Làm Cốt ×3 | Tự thân | **Khiên**: chặn kỹ năng đối kháng kế tiếp nhắm vào mình | "Đảng muốn vững thì phải có chủ nghĩa làm cốt" |
 | 💡 Soi Sáng ×3 | Hỗ trợ khi trả lời | Mở gợi ý | |
 | 🎯 Thu Hẹp Vòng Vây ×2 | Hỗ trợ khi trả lời | Loại 2 đáp án sai | |
 
-Thẻ nhắm vào **đội** đối thủ. Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
+**Chọn mục tiêu:** khi bấm một thẻ chặn đối thủ, màn hình “Chọn mục tiêu” hiện tất cả ngựa của các đội khác (vị trí, số thẻ của đội, có khiên hay không, lý do không chọn được); rê chuột lên ngựa nào thì ngựa đó sáng lên trên bàn cờ. **Ai dùng thẻ gì** hiện cho cả phòng bằng hiệu ứng lá bài lớn giữa bàn, ô “Thẻ vừa dùng” dưới bàn và bảng “Thẻ kỹ năng đã dùng”. **Số thẻ** của mỗi đội hiện trên bàn cờ (🃏n) và trong bảng xếp hạng. Thẻ chặn đối thủ dùng **trước khi đổ xúc xắc** (1 thẻ/lượt). Thẻ hỗ trợ dùng **trong lúc trả lời**.
 
 **Xem thẻ và câu hỏi:** `/cards` hiển thị cả 10 lá bài kích thước lớn (công khai). `/rooms/<mã>/cards` thêm ngân hàng câu hỏi kèm đáp án, có tìm kiếm và tải JSON; **chỉ người điều khiển phòng** xem được (API trả 403 với người khác). Trong phòng có liên kết “Thẻ & câu hỏi”.
 

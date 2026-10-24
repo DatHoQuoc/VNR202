@@ -47,6 +47,10 @@ export const isSafeCell = (cell: number): boolean => cell % CELLS_PER_ARM === AR
 const onRing = (h: Horse): boolean => h.progress >= 1 && h.progress <= RING_MAX;
 const lead = (t: PlayerState): number => Math.max(0, ...t.horses.map((h) => h.progress));
 export const homeCount = (t: PlayerState, finish = FINISH): number => t.horses.filter((h) => h.progress >= finish).length;
+const findHorse = (s: GameState, horseId?: string): { team: PlayerState; horse: Horse } | null => {
+  for (const team of Object.values(s.players)) { const horse = team.horses.find((h) => h.id === horseId); if (horse) return { team, horse }; }
+  return null;
+};
 const needed = (s: GameState, t: PlayerState): number => Math.min(s.winHome, t.horses.length);
 
 export function shuffle<T>(items: readonly T[], rng: Rng): T[] {
@@ -81,13 +85,25 @@ function drawSkill(s: GameState, rng: Rng): SkillCard {
 export interface GameOptions { rollMs?: number; questionMs?: number; finish?: number; winHome?: number; exitRolls?: number[] }
 export interface TeamInput { id: string; seat: number; members: Member[] }
 
-function pickActor(team: PlayerState, finish: number): Member {
+/** Next member whose horse can play; frozen members lose this turn. null = the whole team loses its turn. */
+function pickActor(s: GameState, team: PlayerState, now: number): Member | null {
   const n = team.members.length;
+  let skipped = false;
   for (let k = 1; k <= n; k++) {
     const idx = (team.actingIdx + k) % n;
-    const horse = team.horses.find((h) => h.memberId === team.members[idx].id)!;
-    if (horse.progress < finish) { team.actingIdx = idx; return team.members[idx]; }
+    const member = team.members[idx];
+    const horse = team.horses.find((h) => h.memberId === member.id)!;
+    if (horse.progress >= s.finish) continue;
+    if (horse.frozen) {
+      horse.frozen = false;
+      skipped = true;
+      log(s, now, 'skip', `(${member.name}) bị “Chia Để Trị”, mất lượt này.`, team.teamId);
+      continue;
+    }
+    team.actingIdx = idx;
+    return member;
   }
+  if (skipped) return null;
   team.actingIdx = (team.actingIdx + 1) % n;
   return team.members[team.actingIdx];
 }
@@ -101,8 +117,8 @@ export function createGame(input: TeamInput[], bank: Question[], now: number, rn
     if (t.members.length > MAX_MEMBERS) throw new Error(`Mỗi đội tối đa ${MAX_MEMBERS} người.`);
     players[t.id] = {
       teamId: t.id, seat: t.seat, members: t.members, actingIdx: -1,
-      horses: t.members.map((m) => ({ id: `h-${m.id}`, memberId: m.id, name: m.name, progress: 0 })),
-      hand: [], stunned: false, cap: null, boost: 0, doubleDice: false, shield: false, correct: 0, answered: 0
+      horses: t.members.map((m) => ({ id: `h-${m.id}`, memberId: m.id, name: m.name, progress: 0, frozen: false, cap: null })),
+      hand: [], boost: 0, doubleDice: false, shield: false, correct: 0, answered: 0
     };
   }
   const first = players[teams[0].id];
@@ -110,14 +126,14 @@ export function createGame(input: TeamInput[], bank: Question[], now: number, rn
     phase: 'roll', deadline: null, paused: false, pausedRemaining: null,
     rollMs: options.rollMs ?? DEFAULT_ROLL_MS, questionMs: options.questionMs ?? DEFAULT_QUESTION_MS, finish,
     order: teams.map((t) => t.id), turnTeamId: first.teamId, actingMemberId: '', turnNumber: 1, streak: 0,
-    winHome: Math.max(1, options.winHome ?? 1), exitRolls: options.exitRolls ?? [1, 6], lastSkill: null,
+    winHome: Math.max(1, options.winHome ?? 1), exitRolls: options.exitRolls ?? [1, 6], skillLog: [],
     players, skillDeck: [], skillDiscard: [], cardSeq: 0,
     questionDeck: shuffle(bank.map((q) => q.id), rng),
     skillUsed: false, dice: null, question: null, resolution: null,
     events: [], eventSeq: 0, milestones: Object.fromEntries(teams.map((t) => [t.id, 0])),
     winnerId: null, ranking: null, endedBy: null
   };
-  s.actingMemberId = pickActor(first, finish).id;
+  s.actingMemberId = pickActor(s, first, now)!.id;
   buildSkillDeck(s, rng);
   s.deadline = now + s.rollMs;
   log(s, now, 'start', `Cuộc đua bắt đầu! Tung ${s.exitRolls.join(' hoặc ')} để đưa ngựa ra khỏi chuồng.`);
@@ -132,18 +148,13 @@ function nextTurn(s: GameState, now: number, bonus: boolean): void {
     s.streak = 0;
     const n = s.order.length;
     let idx = s.order.indexOf(s.turnTeamId);
-    for (let guard = 0; guard < n * 2; guard++) {
+    let actor: Member | null = null;
+    for (let guard = 0; guard < n * 3 && !actor; guard++) {
       idx = (idx + 1) % n;
-      const candidate = s.players[s.order[idx]];
-      if (candidate.stunned) {
-        candidate.stunned = false;
-        log(s, now, 'skip', 'bị “Chia Để Trị”, mất lượt này.', candidate.teamId);
-        continue;
-      }
-      break;
+      actor = pickActor(s, s.players[s.order[idx]], now);
     }
     s.turnTeamId = s.order[idx];
-    s.actingMemberId = pickActor(s.players[s.turnTeamId], s.finish).id;
+    s.actingMemberId = (actor ?? s.players[s.turnTeamId].members[0]).id;
   }
   s.turnNumber += 1;
   s.phase = 'roll';
@@ -209,10 +220,10 @@ function resolveTurn(s: GameState, now: number, rng: Rng, bank: Question[], pick
     if (s.exitRolls.includes(dice)) { horse.progress = 1; exited = true; steps = 1; }
   } else if (from < s.finish) {
     steps = dice + boost;
-    if (team.cap !== null && steps > team.cap) { steps = team.cap; capped = true; }
+    if (horse.cap !== null && steps > horse.cap) { steps = horse.cap; capped = true; }
     horse.progress = Math.min(from + steps, s.finish);
     team.boost = 0;
-    team.cap = null;
+    horse.cap = null;
   }
 
   // Landing on a non-safe ring cell kicks every rival horse standing there back to its stable.
@@ -273,10 +284,7 @@ function hostile(s: GameState, now: number, target: PlayerState, name: string): 
   return false;
 }
 
-const mostAdvancedOnRing = (t: PlayerState): Horse | undefined =>
-  t.horses.filter(onRing).sort((a, b) => b.progress - a.progress)[0];
-
-function playSkill(s: GameState, cardId: string, targetId: string | undefined, now: number, rng: Rng): void {
+function playSkill(s: GameState, cardId: string, targetHorseId: string | undefined, now: number, rng: Rng): void {
   const actor = s.players[s.turnTeamId];
   const card = actor.hand.find((c) => c.id === cardId);
   if (!card) throw new Error('Đội bạn không có thẻ này.');
@@ -287,42 +295,45 @@ function playSkill(s: GameState, cardId: string, targetId: string | undefined, n
   } else if (s.phase !== 'question' || !s.question) throw new Error('Thẻ này chỉ dùng khi đang trả lời câu hỏi.');
 
   const myHorse = actor.horses.find((h) => h.memberId === s.actingMemberId)!;
-  let target: PlayerState | null = null;
+  let target: { team: PlayerState; horse: Horse } | null = null;
   if (def.target === 'enemy') {
-    target = targetId ? s.players[targetId] ?? null : null;
-    if (!target || target.teamId === actor.teamId) throw new Error('Hãy chọn một đội đối thủ.');
-    if (card.kind === 'stun' && target.stunned) throw new Error('Đội này đã bị mất lượt rồi.');
-    if (card.kind === 'barricade' && target.cap !== null) throw new Error('Đội này đã bị Thuế Khóa rồi.');
-    if (card.kind === 'push-back' && !mostAdvancedOnRing(target)) throw new Error('Đội này không có ngựa nào đang trên vòng đua.');
-    if (card.kind === 'swap') {
-      const theirs = mostAdvancedOnRing(target);
-      if (!onRing(myHorse) || !theirs) throw new Error('Hoán đổi cần ngựa của bạn và một ngựa đối thủ đều đang trên vòng đua.');
-    }
-    if (card.kind === 'steal' && !target.hand.length) throw new Error('Đội này chưa có thẻ nào để lấy.');
+    target = findHorse(s, targetHorseId);
+    if (!target || target.team.teamId === actor.teamId) throw new Error('Hãy chọn một con ngựa của đội đối thủ.');
+    const h = target.horse;
+    if (h.progress >= s.finish) throw new Error('Ngựa này đã về đích.');
+    if (card.kind === 'stun' && h.frozen) throw new Error('Chủ ngựa này đã bị mất lượt rồi.');
+    if (card.kind === 'barricade' && (h.cap !== null || h.progress === 0)) throw new Error(h.progress === 0 ? 'Ngựa này còn ở chuồng.' : 'Ngựa này đã bị Thuế Khóa rồi.');
+    if (card.kind === 'push-back' && !onRing(h)) throw new Error('Chỉ đẩy lùi được ngựa đang trên vòng đua.');
+    if (card.kind === 'swap' && (!onRing(h) || !onRing(myHorse))) throw new Error('Hoán đổi cần ngựa của bạn và ngựa mục tiêu đều đang trên vòng đua.');
+    if (card.kind === 'steal' && !target.team.hand.length) throw new Error('Đội này chưa có thẻ nào để lấy.');
   }
 
   actor.hand = actor.hand.filter((c) => c.id !== cardId);
   s.skillDiscard.push(card);
   if (def.timing === 'roll') s.skillUsed = true;
-  const blocked = !!target && hostile(s, now, target, def.name);
-  s.lastSkill = { id: (s.lastSkill?.id ?? 0) + 1, kind: card.kind, teamId: actor.teamId, targetId: target?.teamId, blocked };
-  log(s, now, 'skill', `dùng “${def.name}”`, actor.teamId, target?.teamId);
+  const member = actor.members.find((m) => m.id === s.actingMemberId)!;
+  const blocked = !!target && hostile(s, now, target.team, def.name);
+  s.skillLog.push({
+    id: (s.skillLog.at(-1)?.id ?? 0) + 1, turn: s.turnNumber, kind: card.kind, teamId: actor.teamId, memberName: member.name,
+    targetTeamId: target?.team.teamId, targetHorseId: target?.horse.id, targetName: target?.horse.name, blocked
+  });
+  if (s.skillLog.length > 30) s.skillLog.shift();
+  log(s, now, 'skill', `(${member.name}) dùng “${def.name}”${target ? ` lên ngựa của ${target.horse.name}` : ''}${blocked ? ' nhưng bị khiên chặn' : ''}.`, actor.teamId, target?.team.teamId);
   if (blocked) return;
 
   switch (card.kind) {
-    case 'stun': target!.stunned = true; break;
-    case 'barricade': target!.cap = BARRICADE_CAP; break;
-    case 'push-back': { const h = mostAdvancedOnRing(target!)!; h.progress = Math.max(1, h.progress - PUSHBACK); break; }
+    case 'stun': target!.horse.frozen = true; break;
+    case 'barricade': target!.horse.cap = BARRICADE_CAP; break;
+    case 'push-back': target!.horse.progress = Math.max(1, target!.horse.progress - PUSHBACK); break;
     case 'swap': {
-      const theirs = mostAdvancedOnRing(target!)!;
       const mine = ringCell(actor.seat, myHorse.progress)!;
-      const other = ringCell(target!.seat, theirs.progress)!;
+      const other = ringCell(target!.team.seat, target!.horse.progress)!;
       myHorse.progress = progressAt(actor.seat, other);
-      theirs.progress = progressAt(target!.seat, mine);
+      target!.horse.progress = progressAt(target!.team.seat, mine);
       break;
     }
     case 'steal': {
-      const stolen = target!.hand.splice(Math.floor(rng() * target!.hand.length), 1)[0];
+      const stolen = target!.team.hand.splice(Math.floor(rng() * target!.team.hand.length), 1)[0];
       actor.hand.push(stolen);
       if (actor.hand.length > HAND_MAX) s.skillDiscard.push(actor.hand.shift()!);
       break;
@@ -362,7 +373,7 @@ export function applyAction(
       break;
     }
     case 'play-skill':
-      playSkill(s, action.cardId, action.targetId, now, rng);
+      playSkill(s, action.cardId, action.targetHorseId, now, rng);
       break;
     default:
       throw new Error('Lệnh không hợp lệ.');

@@ -23,6 +23,11 @@ npm test
 
 State is in memory (one class = one room) with a JSON snapshot. If the snapshot cannot be read the server refuses to start instead of silently starting an empty game.
 
+## Player page
+
+Static page served at `/play/` (source in `public/play/`, plain HTML/CSS/JS, no build). Students open `http://<host>:3000/play/` (optionally `?code=ABCDE`).
+`scripts/play-flow.js` drives a full session through Playwright against a running server and saves screenshots (`docs/play-screenshots/`).
+
 ## Session flow
 
 `lobby` → `joining` → `rounds` (1..4: **pick → guess → revealed**) → `announce` → `ended`

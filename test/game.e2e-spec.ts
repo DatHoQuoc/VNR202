@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { AddressInfo } from 'net';
 import { io, Socket } from 'socket.io-client';
@@ -11,6 +12,8 @@ process.env.TEAMS = '6';
 // imported after env is set
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { AppModule } = require('../src/app.module');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { serveStatic } = require('../src/config/static');
 
 let app: INestApplication;
 let base: string;
@@ -43,7 +46,9 @@ async function player(name: string, team: number, code = 'ABCDE') {
 
 beforeAll(async () => {
   const mod = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  app = mod.createNestApplication();
+  const nest = mod.createNestApplication<NestExpressApplication>();
+  serveStatic(nest);
+  app = nest;
   await app.listen(0);
   base = `http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
 });
@@ -51,6 +56,16 @@ beforeAll(async () => {
 afterAll(async () => {
   sockets.forEach((s) => s.close());
   await app.close();
+});
+
+describe('player page', () => {
+  it('serves /play/ with its title and assets', async () => {
+    const res = await fetch(`${base}/play/`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('<title>VNR202 · Trang người chơi</title>');
+    expect((await fetch(`${base}/play/play.js`)).status).toBe(200);
+    expect((await fetch(`${base}/play/play.css`)).status).toBe(200);
+  });
 });
 
 describe('full session', () => {

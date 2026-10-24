@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>VNR202 · Trang người chơi</title>
+  <link rel="stylesheet" href="play.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">VNR202 <span>· 1930: Bài toán lựa chọn</span></div>
+    <div class="top-right">
+      <span id="who" class="chip" hidden></span>
+      <span id="conn" class="conn is-wait" role="status" aria-live="polite"><i></i><b id="conn-text">Đang kết nối…</b></span>
+    </div>
+  </header>
+
+  <main id="app">
+    <noscript><p class="card">Trang này cần JavaScript để chơi.</p></noscript>
+
+    <!-- Tham gia -->
+    <section id="s-join" class="card" hidden>
+      <h1>Vào phòng chơi</h1>
+      <form id="join-form" autocomplete="off" novalidate>
+        <label>Mã phòng
+          <input id="f-code" type="text" maxlength="12" autocapitalize="characters" spellcheck="false" placeholder="VD: ABCDE" required>
+        </label>
+        <label>Tên hiển thị <small>(1–30 ký tự)</small>
+          <input id="f-name" type="text" maxlength="30" placeholder="Tên của bạn" required>
+        </label>
+        <label>Nhóm
+          <select id="f-team" required></select>
+        </label>
+        <p id="join-err" class="err" role="alert" hidden></p>
+        <button id="join-btn" class="primary" type="submit">Vào phòng</button>
+      </form>
+    </section>
+
+    <!-- Chờ -->
+    <section id="s-wait" class="card center" hidden>
+      <h1 id="wait-title">Đang chờ…</h1>
+      <p id="wait-text" class="lead"></p>
+    </section>
+
+    <!-- Bước 1 -->
+    <section id="s-pick" class="card" hidden>
+      <p class="kicker" id="pick-kicker"></p>
+      <h1 id="pick-prompt"></h1>
+      <div id="pick-options" class="options" role="group" aria-label="Các lựa chọn"></div>
+      <p id="pick-status" class="status" aria-live="polite"></p>
+      <p id="pick-sent" class="sent" hidden>Đã gửi. Hãy hạ màn hình laptop xuống và nhìn lên màn hình chiếu.</p>
+      <p id="pick-err" class="err" role="alert" hidden></p>
+    </section>
+
+    <!-- Bước 2 -->
+    <section id="s-guess" class="card" hidden>
+      <p class="kicker" id="guess-kicker"></p>
+      <h1 id="guess-ask"></h1>
+      <p id="guess-late" class="notice" hidden></p>
+      <form id="guess-form" class="guess-row" novalidate>
+        <input id="guess-input" type="number" min="0" max="100" step="any" inputmode="decimal" aria-label="Dự đoán của bạn (0 đến 100)" placeholder="0–100">
+        <span class="unit">%</span>
+        <button id="guess-btn" class="primary" type="submit">Gửi</button>
+      </form>
+      <p id="guess-status" class="status" aria-live="polite"></p>
+      <p id="guess-sent" class="sent" hidden>Đã gửi. Hãy hạ màn hình laptop xuống và nhìn lên màn hình chiếu.</p>
+      <p id="guess-err" class="err" role="alert" hidden></p>
+    </section>
+
+    <!-- Kết quả -->
+    <section id="s-result" class="card" hidden>
+      <p class="kicker" id="res-kicker"></p>
+      <h1 id="res-title"></h1>
+      <p id="res-ask" class="lead" hidden></p>
+      <p id="res-excused" class="notice" hidden></p>
+      <div id="res-you" class="you" hidden>
+        <div><span>Bạn đoán</span><strong id="res-guess"></strong></div>
+        <div><span>Thực tế</span><strong id="res-actual"></strong></div>
+        <div><span>Điểm</span><strong id="res-score"></strong></div>
+      </div>
+      <p id="res-noscore" class="notice" hidden></p>
+      <p id="res-compare" class="compare" hidden></p>
+      <p id="res-correct" class="correct" hidden></p>
+      <h2>Cả lớp đã chọn</h2>
+      <div id="res-bars" class="bars"></div>
+      <p id="res-missing" class="status" hidden>Kết quả vòng này đã được công bố trên màn hình chiếu.</p>
+    </section>
+
+    <!-- Công bố -->
+    <section id="s-finale" class="card" hidden>
+      <h1 id="fin-title">Đang công bố kết quả trên màn hình</h1>
+      <p class="lead">Hãy nhìn lên màn hình chiếu.</p>
+      <ol id="fin-list" class="ranks"></ol>
+    </section>
+
+    <!-- Cảm nhận -->
+    <section id="s-reflect" class="card" hidden>
+      <h2>Cảm nhận của bạn</h2>
+      <p id="ref-prompt" class="lead"></p>
+      <form id="ref-form" novalidate>
+        <textarea id="ref-text" rows="4" aria-label="Cảm nhận của bạn"></textarea>
+        <div class="ref-row">
+          <span id="ref-count" class="status">0/0</span>
+          <button id="ref-btn" class="primary" type="submit">Gửi</button>
+        </div>
+      </form>
+      <p class="status">Ẩn danh, mỗi bạn chỉ gửi được một lần.</p>
+      <p id="ref-err" class="err" role="alert" hidden></p>
+    </section>
+    <section id="s-thanks" class="card center" hidden>
+      <h2>Cảm ơn bạn!</h2>
+      <p class="lead">Cảm nhận của bạn đã được gửi (ẩn danh).</p>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="play.js"></script>
+</body>
+</html>

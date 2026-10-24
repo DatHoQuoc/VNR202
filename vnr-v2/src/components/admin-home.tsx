@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
-interface RoomRow { code: string; title: string; status: 'lobby' | 'playing' | 'finished'; createdAt: number; players: number; teams: number; turn: number; winHome: number }
+interface RoomRow { code: string; title: string; status: 'lobby' | 'playing' | 'finished'; createdAt: number; players: number; teams: number; turn: number; winHome: number; horses?: number }
 const STATUS = { lobby: 'Phòng chờ', playing: 'Đang chơi', finished: 'Đã kết thúc' };
 
 async function api(url: string, method = 'GET', body?: unknown) {
@@ -20,8 +20,10 @@ export function AdminHome() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [title, setTitle] = useState('Cá Ngựa Cách Mạng · Lớp VNR202');
-  const [seconds, setSeconds] = useState(30);
-  const [winHome, setWinHome] = useState(1);
+  const [seconds, setSeconds] = useState(25);
+  const [horses, setHorses] = useState(2);
+  const [timeLimitMin, setTimeLimitMin] = useState(18);
+  const [winHome, setWinHome] = useState(2);
   const [exitRule, setExitRule] = useState('one-six');
 
   useEffect(() => { api('/api/admin/session').then((d) => setAuthed(d.authenticated)).catch(() => setAuthed(false)); }, []);
@@ -41,7 +43,7 @@ export function AdminHome() {
   async function logout() { await api('/api/admin/session', 'DELETE').catch(() => undefined); setAuthed(false); setRooms([]); }
   async function create() {
     setBusy(true); setError('');
-    try { const d = await api('/api/admin/rooms', 'POST', { title, questionSeconds: seconds, winHome, exitRule }); window.location.href = `/admin/rooms/${d.code}`; }
+    try { const d = await api('/api/admin/rooms', 'POST', { title, questionSeconds: seconds, winHome: Math.min(winHome, horses), exitRule, horses, timeLimitMin }); window.location.href = `/admin/rooms/${d.code}`; }
     catch (err) { setError(err instanceof Error ? err.message : 'Không tạo được phòng.'); setBusy(false); }
   }
   async function remove(code: string) {
@@ -73,8 +75,13 @@ export function AdminHome() {
           <label className="field">Thời gian trả lời mỗi câu: <b>{seconds} giây</b><input type="range" min={15} max={60} step={5} value={seconds} onChange={(e) => setSeconds(Number(e.target.value))} /></label>
           <label className="field">Xuất chuồng khi tung
             <select value={exitRule} onChange={(e) => setExitRule(e.target.value)}><option value="one-six">1 hoặc 6 (nhanh hơn)</option><option value="six">Chỉ 6 (luật cổ điển)</option></select></label>
-          <label className="field">Đội thắng khi có bao nhiêu ngựa về đích
-            <select value={winHome} onChange={(e) => setWinHome(Number(e.target.value))}><option value={1}>1 ngựa (ván nhanh, khoảng 25 phút)</option><option value={2}>2 ngựa</option><option value={3}>3 ngựa</option><option value={6}>Tất cả ngựa của đội (rất dài)</option></select></label>
+          <label className="field">Số ngựa mỗi đội
+            <select value={horses} onChange={(e) => { const h = Number(e.target.value); setHorses(h); setWinHome((w) => Math.min(w, h)); }}><option value={2}>2 ngựa (nhanh, khoảng 15 phút với 6 đội)</option><option value={3}>3 ngựa (nhiều chiến thuật hơn, khoảng 19 phút)</option></select></label>
+          <label className="field">Đội thắng khi đưa về đích
+            <select value={Math.min(winHome, horses)} onChange={(e) => setWinHome(Number(e.target.value))}><option value={1}>1 ngựa (rất nhanh)</option><option value={2}>2 ngựa{horses === 2 ? ' (cả đội)' : ''} (khuyên dùng)</option>{horses === 3 && <option value={3}>Cả 3 ngựa (dài)</option>}</select></label>
+          <label className="field">Giới hạn thời gian ván: <b>{timeLimitMin} phút</b>
+            <input type="range" min={10} max={20} step={1} value={timeLimitMin} onChange={(e) => setTimeLimitMin(Number(e.target.value))} />
+            <small className="muted">Hết giờ, đội có nhiều ngựa về đích nhất (rồi đến tổng bước đi) thắng.</small></label>
           <button className="btn primary" disabled={busy} onClick={create}>Tạo phòng và mở trang điều khiển</button>
           {error && <p className="error">{error}</p>}
         </section>
@@ -87,7 +94,7 @@ export function AdminHome() {
                 {rooms.map((r) => (
                   <tr key={r.code}>
                     <td><b className="code">{r.code}</b></td>
-                    <td>{r.title}<br /><small className="muted">{new Date(r.createdAt).toLocaleTimeString('vi-VN')} · {r.winHome} ngựa về đích</small></td>
+                    <td>{r.title}<br /><small className="muted">{new Date(r.createdAt).toLocaleTimeString('vi-VN')} · {r.winHome} ngựa về đích · {r.horses ?? 2} ngựa/đội</small></td>
                     <td><span className={`status ${r.status}`}>{STATUS[r.status]}</span>{r.status === 'playing' && <small className="muted"> · lượt {r.turn}</small>}</td>
                     <td>{r.players} người · {r.teams} đội</td>
                     <td className="row-actions">

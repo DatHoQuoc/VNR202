@@ -41,9 +41,9 @@ export class AdminController {
   }
 
   @Post('rooms')
-  create(@Req() req: Request, @Body() body: { title?: string; questionSeconds?: number; winHome?: number; exitRule?: string }) {
+  create(@Req() req: Request, @Body() body: { title?: string; questionSeconds?: number; winHome?: number; exitRule?: string; horses?: number; timeLimitMin?: number }) {
     requireJson(req); this.auth(req);
-    const room = this.rooms.create(String(body?.title ?? ''), Number(body?.questionSeconds), Number(body?.winHome), body?.exitRule);
+    const room = this.rooms.create(String(body?.title ?? ''), Number(body?.questionSeconds), Number(body?.winHome), body?.exitRule, Number(body?.horses), Number(body?.timeLimitMin));
     return { code: room.code };
   }
 

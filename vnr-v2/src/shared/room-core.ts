@@ -1,6 +1,6 @@
 import { randomBytes, randomInt } from 'node:crypto';
 import {
-  applyAction, createGame, endGame, homeCount, MAX_MEMBERS, pauseGame, resumeGame, tick, type GameOptions
+  applyAction, createGame, DEFAULT_TIME_LIMIT_MS, endGame, homeCount, MAX_MEMBERS, pauseGame, resumeGame, tick, type GameOptions
 } from '../game/engine.ts';
 import { QUESTION_BANK, questionById } from '../game/questions.ts';
 import { COLOR_NAMES, TEAM_COLORS, type GameAction, type GameState, type SkillCard, type TeamColor } from '../game/types.ts';
@@ -156,7 +156,10 @@ export function projectRoom(room: RoomRecord, viewer: Viewer) {
   const now = Date.now();
   return {
     code: room.code, title: room.title, status: room.status, revision: room.revision, serverNow: now,
-    settings: { winHome: room.options.winHome ?? 1, exitRolls: room.options.exitRolls ?? [1, 6] },
+    settings: {
+      winHome: room.options.winHome ?? 2, exitRolls: room.options.exitRolls ?? [1, 6],
+      horses: room.options.horses ?? 2, timeLimitMin: Math.round((room.options.timeLimitMs ?? DEFAULT_TIME_LIMIT_MS) / 60_000)
+    },
     viewer: viewer.role === 'team' ? { role: 'team' as const, teamId: viewer.teamId, playerId: viewer.playerId } : { role: viewer.role },
     teams: TEAM_COLORS.map((color: TeamColor, slot) => ({
       id: teamIdOf(slot), slot, color, name: teamNameOf(slot),
@@ -165,7 +168,7 @@ export function projectRoom(room: RoomRecord, viewer: Viewer) {
     game: g && {
       phase: g.phase, deadline: g.deadline, paused: g.paused, pausedRemaining: g.pausedRemaining, finish: g.finish,
       order: g.order, turnTeamId: g.turnTeamId, actingMemberId: g.actingMemberId, turnNumber: g.turnNumber, dice: g.dice,
-      skillUsed: g.skillUsed, winHome: g.winHome, exitRolls: g.exitRolls, streak: g.streak,
+      skillUsed: g.skillUsed, endsAt: g.endsAt, timeLeft: g.pausedLeft, timeLimitMs: g.timeLimitMs, pending: g.pending && { options: g.pending.options, outcome: g.pending.outcome }, winHome: g.winHome, exitRolls: g.exitRolls, streak: g.streak,
       deckCount: g.skillDeck.length, skillLog: g.skillLog.slice(-12),
       question: g.question && {
         id: g.question.id, text: g.question.text, options: g.question.options, removed: g.question.removed,
@@ -173,7 +176,7 @@ export function projectRoom(room: RoomRecord, viewer: Viewer) {
       },
       resolution: g.resolution, events: g.events.slice(-30), winnerId: g.winnerId, ranking: g.ranking, endedBy: g.endedBy,
       players: Object.fromEntries(Object.values(g.players).map((p) => [p.teamId, {
-        seat: p.seat, members: p.members, horses: p.horses, handCount: p.hand.length, boost: p.boost,
+        seat: p.seat, members: p.members, horses: p.horses, handCount: p.hand.length, stunned: p.stunned, boost: p.boost,
         doubleDice: p.doubleDice, shield: p.shield, correct: p.correct, answered: p.answered,
         home: homeCount(p, g.finish), lead: Math.max(0, ...p.horses.map((h) => h.progress))
       }]))

@@ -52,10 +52,21 @@ async function newPage(browser, label, viewport = VP) {
   return page;
 }
 
-const apiCmd = (page, code, action) => page.evaluate(async ([c, a]) => {
+const rawCmd = (page, code, action) => page.evaluate(async ([c, a]) => {
   const r = await fetch(`/api/rooms/${c}/command`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: { type: 'game', action: a } }) });
   return { status: r.status, body: await r.json() };
 }, [code, action]);
+/** Like a real client: after an answer that leaves several legal moves, pick one (prefers a kick, then reaching home). */
+async function apiCmd(page, code, action) {
+  let r = await rawCmd(page, code, action);
+  const g = r.body.game;
+  if (action.type === 'answer' && g && g.phase === 'move' && g.pending) {
+    const opts = g.pending.options;
+    const best = opts.find((o) => o.kicks.length) ?? opts.find((o) => o.home) ?? opts[opts.length - 1];
+    r = await rawCmd(page, code, { type: 'choose-horse', horseId: best.horseId });
+  }
+  return r;
+}
 const apiView = (page, code) => page.evaluate(async (c) => (await fetch(`/api/rooms/${c}`, { cache: 'no-store' })).json(), code);
 
 async function joinUi(browser, code, name, teamIdx) {
@@ -232,7 +243,12 @@ async function joinUi(browser, code, name, teamIdx) {
     await admin.goto(`${BASE}/admin/rooms/${code}`); await admin.waitForSelector('button:has-text("Chơi ván mới")');
     await admin.click('button:has-text("Chơi ván mới")'); await admin.waitForSelector('button:has-text("Tạm dừng")'); await admin.waitForTimeout(600);
   };
-  const actingPage = async () => { await ensureRunning(); const v = await apiView(players[0], code); return { p: byId[v.game.actingMemberId], v }; };
+  const actingPage = async () => {
+    await ensureRunning();
+    let v = await apiView(players[0], code);
+    if (v.game.phase === 'move') { const p = byId[v.game.actingMemberId]; const o = v.game.pending.options; await rawCmd(p, code, { type: 'choose-horse', horseId: o[o.length - 1].horseId }); v = await apiView(players[0], code); }
+    return { p: byId[v.game.actingMemberId], v };
+  };
 
   await step('Chỉ người đến lượt mới có nút đổ xúc xắc / đáp án', async () => {
     const { p: actor, v } = await actingPage();
@@ -258,7 +274,9 @@ async function joinUi(browser, code, name, teamIdx) {
     await shot(spectator, 'nguoi-khac-xem-cau-hoi');
     await shot(players.proj, 'man-chieu-dang-hoi');
     await actor.locator('.option:not([disabled])').first().click();
-    await actor.waitForSelector('.result'); await actor.waitForTimeout(1000);
+    await actor.waitForSelector('.result, .move-option', { timeout: 8000 });
+    if (await actor.locator('.move-option').count()) { await actor.waitForTimeout(500); await shot(actor, 'chon-ngua-di', { full: true }); await actor.locator('.move-option:not([disabled])').first().click(); await actor.waitForSelector('.result'); }
+    await actor.waitForTimeout(1000);
     await shot(actor, 'ket-qua-luot', { full: true });
   });
   await step('Admin tạm dừng: người chơi không thao tác được, tiếp tục thì chơi lại được', async () => {
@@ -388,7 +406,7 @@ async function joinUi(browser, code, name, teamIdx) {
     await side.post(`/api/admin/rooms/${created.code}/command`, { data: { command: { type: 'start' } } });
     await sp[0].waitForSelector('text=LƯỢT 1');
     const t0 = Date.now(); let sawAuto = false, sawTimeout = false;
-    while (Date.now() - t0 < 45_000) {
+    while (Date.now() - t0 < 70_000) {
       const v = await apiView(sp[0], created.code);
       if (v.game.events.some((e) => /chậm đổ xúc xắc/.test(e.text))) sawAuto = true;
       if (v.game.resolution?.outcome === 'timeout') { sawTimeout = true; break; }
@@ -417,7 +435,7 @@ async function joinUi(browser, code, name, teamIdx) {
     const [gone, stay] = v0.game.actingMemberId === v0.viewer.playerId ? [sp[0], sp[1]] : [sp[1], sp[0]];
     await gone.context().close();           // the acting player vanishes
     const t0 = Date.now(); let moved = null;
-    while (Date.now() - t0 < 60_000) {
+    while (Date.now() - t0 < 75_000) {
       const v = await apiView(stay, created.code);
       if (v.game.turnNumber > 1 || v.game.resolution) { moved = (Date.now() - t0) / 1000; break; }
       if (Date.now() - t0 > 18_000 && !(await stay.getByText('mất kết nối').count())) { /* notice appears after ~15s offline */ }

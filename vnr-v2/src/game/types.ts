@@ -36,16 +36,14 @@ export interface ActiveQuestion {
 
 export interface Member { id: string; name: string }
 
-/** One horse per team member. progress: 0 = in the stable, 1..RING_MAX ring, then the home lane, FINISH = home. */
+/** A team owns 2-3 horses. progress: 0 = in the stable, 1..RING_MAX ring, then the home lane, FINISH = home. */
 export interface Horse {
-  id: string; memberId: string; name: string; progress: number;
-  /** Owner loses their next turn (Chia Để Trị). */
-  frozen: boolean;
+  id: string; name: string; progress: number;
   /** This horse's next move is limited to this many steps (Thuế Khóa). */
   cap: number | null;
 }
 
-/** A team (slot 1-6): shared hand of skill cards, one horse per member. */
+/** A team (slot 1-6): members take turns rolling; the horses and skill cards are shared. */
 export interface PlayerState {
   teamId: string;
   seat: number;
@@ -54,11 +52,37 @@ export interface PlayerState {
   /** Index into members of whoever acted last; the next turn goes to the following member. */
   actingIdx: number;
   hand: SkillCard[];
+  /** Team loses its next turn (Chia Để Trị). */
+  stunned: boolean;
   boost: number;
+  /** Next roll is taken twice and the better total is kept. */
   doubleDice: boolean;
   shield: boolean;
   correct: number;
   answered: number;
+}
+
+/** One legal move for the current roll, shown to the player in the 'move' phase. */
+export interface MoveOption {
+  horseId: string;
+  kind: 'exit' | 'advance';
+  from: number;
+  to: number;
+  capped: boolean;
+  /** Rival horses that would be kicked back to their stable. */
+  kicks: { horseId: string; teamId: string; name: string }[];
+  home: boolean;
+}
+
+export interface PendingMove {
+  outcome: 'correct' | 'wrong' | 'timeout';
+  picked: number | null;
+  gained: SkillKind | null;
+  questionText: string;
+  correctText: string;
+  explain: string;
+  ref: string;
+  options: MoveOption[];
 }
 
 export interface Resolution {
@@ -66,8 +90,10 @@ export interface Resolution {
   teamId: string;
   memberId: string;
   memberName: string;
-  horseId: string;
-  dice: number;
+  dice: [number, number];
+  /** null when no horse could move on this roll. */
+  horseId: string | null;
+  horseName: string | null;
   steps: number;
   from: number;
   to: number;
@@ -75,6 +101,7 @@ export interface Resolution {
   exited: boolean;
   /** Horses kicked back to their stable by this move. */
   kicked: { horseId: string; teamId: string; name: string }[];
+  /** Doubles, a kick or a horse reaching home gives the same player another roll. */
   bonus: boolean;
   picked: number | null;
   outcome: 'correct' | 'wrong' | 'timeout';
@@ -102,7 +129,7 @@ export interface SkillUse {
 
 export interface GameEvent { id: number; at: number; type: string; text: string; teamId?: string; targetId?: string }
 
-export type Phase = 'roll' | 'question' | 'finished';
+export type Phase = 'roll' | 'question' | 'move' | 'finished';
 
 export interface GameState {
   phase: Phase;
@@ -127,7 +154,12 @@ export interface GameState {
   cardSeq: number;
   questionDeck: string[];
   skillUsed: boolean;
-  dice: number | null;
+  dice: [number, number] | null;
+  pending: PendingMove | null;
+  /** Whole-game clock: the game ends when it runs out (ranked by horses home). */
+  timeLimitMs: number;
+  endsAt: number | null;
+  pausedLeft: number | null;
   question: ActiveQuestion | null;
   resolution: Resolution | null;
   events: GameEvent[];
@@ -135,10 +167,11 @@ export interface GameState {
   milestones: Record<string, number>;
   winnerId: string | null;
   ranking: string[] | null;
-  endedBy: 'finish' | 'host' | null;
+  endedBy: 'finish' | 'host' | 'time' | null;
 }
 
 export type GameAction =
   | { type: 'roll' }
   | { type: 'answer'; index: number }
+  | { type: 'choose-horse'; horseId: string }
   | { type: 'play-skill'; cardId: string; targetHorseId?: string };

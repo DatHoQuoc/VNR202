@@ -6,26 +6,28 @@ Game cá ngựa **tối đa 6 người chơi, mỗi người một con ngựa** 
 
 Nguồn luật tham khảo: [mytour.vn](https://mytour.vn/vi/blog/bai-viet/co-dua-ngua.html), [fptshop.com.vn](https://fptshop.com.vn/tin-tuc/thu-thuat/cach-choi-co-ca-ngua-156472), [Wikipedia: Ludo](https://en.wikipedia.org/wiki/Ludo), [rarepike.com](https://rarepike.com/ludo/articles/rules-for-beginners/). Các nguồn khác nhau ở vài chi tiết nên bản này chọn như dưới đây.
 
-0. **Đội và ngựa:** có 6 đội, màu cố định (Đỏ, Cam, Vàng, Lục, Lam, Tím). Vào phòng, mỗi người nhập tên rồi chọn một đội; **mỗi người có một con ngựa riêng** (đội 1-6 người). Thành viên trong đội lần lượt đến lượt; thẻ kỹ năng là của cả đội.
-1. **Bản đồ:** hình sao 6 cánh, vòng đua chung **42 ô**, mỗi đội có **chuồng** (đặt ngựa), **ô xuất phát ★** ở đầu cánh và **đường về nhà 4 ô** riêng. Xúc xắc đặt ở giữa bàn. Ngựa đi một vòng đầy đủ rồi rẽ vào đường về nhà.
-2. **Xuất chuồng:** ngựa ở chuồng phải tung **1 hoặc 6** mới ra ô xuất phát (phòng có thể chọn "chỉ 6" – luật cổ điển). Không ra được vẫn được trả lời câu hỏi để nhận thẻ.
-3. **Mỗi lượt:** (tuỳ chọn) dùng **1 thẻ kỹ năng** → **đổ xúc xắc** → trả lời **1 câu hỏi 4 đáp án** (mặc định 30 giây). **Đúng**: nhận **1 thẻ kỹ năng**. **Sai / hết giờ**: không có thẻ nhưng ngựa **vẫn đi tiếp**.
+0. **Đội và ngựa:** có 6 đội, màu cố định (Đỏ, Cam, Vàng, Lục, Lam, Tím). Vào phòng, mỗi người nhập tên rồi chọn một đội (1-6 người/đội). **Mỗi đội có 2 hoặc 3 ngựa dùng chung** (quản trị chọn khi tạo phòng). Các thành viên lần lượt đến lượt đổ xúc xắc và trả lời; thẻ kỹ năng là của cả đội.
+1. **Bản đồ:** hình sao 6 cánh, vòng đua chung **30 ô**, mỗi đội có **chuồng**, **ô xuất phát ★** ở đầu cánh và **đường về nhà 3 ô** riêng (tổng 33 bước mỗi ngựa). Hai xúc xắc đặt giữa bàn. Ngựa đi một vòng đầy đủ rồi rẽ vào đường về nhà.
+2. **Hai xúc xắc:** ngựa đi theo **tổng hai viên**. Mỗi đội bắt đầu với **1 ngựa đã ở ô xuất phát**; ngựa trong chuồng cần **ít nhất một viên ra 1 hoặc 6** để xuất chuồng (phòng có thể chọn "chỉ 6" – luật cổ điển). Lượt xuất chuồng không đi thêm bước.
+3. **Mỗi lượt:** (tuỳ chọn) dùng **1 thẻ kỹ năng** → **đổ xúc xắc** → trả lời **1 câu hỏi 4 đáp án** (mặc định 25 giây) → **chọn ngựa đi** (12 giây; hết giờ hệ thống chọn: ưu tiên đá ngựa, về đích, xuất chuồng, ngựa dẫn đầu; chỉ có một lựa chọn thì tự đi). **Đúng**: nhận **1 thẻ kỹ năng**. **Sai / hết giờ**: không có thẻ nhưng ngựa **vẫn đi tiếp**. Màn chọn ngựa hiện trước kết quả: ô đi tới, "ĐÁ n ngựa", "VỀ ĐÍCH".
 4. **Đá ngựa:** đáp xuống ô có ngựa đội khác (trừ 6 ô ★ an toàn) thì **ngựa đó bị đá về chuồng** (hiệu ứng "ĐÁ!"). Ngựa cùng đội đứng chung ô được. Không cần tung đúng số để về đích.
-5. **Tung thêm lượt:** tung 6, đá được ngựa, hoặc đưa ngựa về đích → cùng người đó tung tiếp (tối đa 2 lần liên tiếp).
-6. **Thắng:** đội đầu tiên có đủ số ngựa về đích (mặc định **1**, chọn 1-3 hoặc tất cả khi tạo phòng) thắng. Tay tối đa 5 thẻ.
+5. **Tung thêm lượt:** hai viên giống nhau (đôi), đá được ngựa, hoặc đưa ngựa về đích → cùng người đó tung tiếp (tối đa 2 lần liên tiếp).
+6. **Thắng:** đội đầu tiên đưa đủ số ngựa về đích (mặc định **2**; chọn 1-3 khi tạo phòng) thắng. **Ván có giới hạn thời gian 10-20 phút** (mặc định 18, có đồng hồ ⏱ trên đầu trang, tạm dừng thì dừng đồng hồ); hết giờ, đội có nhiều ngựa về đích nhất (rồi đến tổng bước đi) thắng. Tay tối đa 5 thẻ.
 7. Ngựa đi qua mỗi chặng sẽ bật một **mốc lịch sử** (1858, 1911, 1920, 1925, 1929) lấy từ chương.
+
+**Nhịp ván (mô phỏng 40 ván với bot, 6 đội × 2 ngựa, ~18 giây/lượt):** trung vị 49 lượt ≈ 15 phút, p90 61 lượt ≈ 18 phút. 3 ngựa/đội: trung vị 64 lượt ≈ 19 phút. Số lượt tăng theo số đội, nên ít đội thì ván ngắn hơn; giới hạn thời gian bảo đảm không bao giờ vượt quá mức đã chọn.
 
 ### 10 thẻ kỹ năng (26 thẻ trong bộ bài)
 
 | Thẻ | Loại | Hiệu ứng | Gắn với nội dung bài |
 |---|---|---|---|
-| ✂️ Chia Để Trị ×3 | Chặn đối thủ | Chủ của **con ngựa được chọn** mất lượt kế tiếp của họ | Pháp chia ba kỳ |
-| 🚧 Thuế Khóa Nặng Nề ×3 | Chặn đối thủ | Lần đi kế tiếp của **con ngựa được chọn** tối đa 2 bước | Thuế khóa, bóc lột |
-| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Con ngựa được chọn lùi 4 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
-| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** ngựa đang chơi của bạn với ngựa được chọn (cả hai trên vòng đua) | Đổi thay khi có đường lối đúng |
+| ✂️ Chia Để Trị ×3 | Chặn đối thủ | **Cả đội** của ngựa được chọn mất lượt kế tiếp | Pháp chia ba kỳ |
+| 🚧 Thuế Khóa Nặng Nề ×3 | Chặn đối thủ | Lần đi kế tiếp của **con ngựa được chọn** tối đa 3 bước | Thuế khóa, bóc lột |
+| ⏪ Đàn Áp Khởi Nghĩa ×3 | Chặn đối thủ | **Ngựa được chọn lùi 5 ô** (chỉ khi còn trên vòng đua) | Khởi nghĩa Yên Bái bị dập |
+| 🔄 Hoán Đổi Vận Mệnh ×2 | Chặn đối thủ | **Đổi chỗ** ngựa dẫn đầu vòng đua của bạn với ngựa được chọn | Đổi thay khi có đường lối đúng |
 | 🕵️ Mua Chuộc ×2 | Chặn đối thủ | **Lấy ngẫu nhiên 1 thẻ** từ tay đội của ngựa được chọn | Sarraut mua chuộc Nguyễn Ái Quốc |
-| 🚩 Đường Cách Mệnh ×3 | Tự thân | Lần đi kế tiếp **+3 bước** | Tác phẩm *Đường cách mệnh* |
-| 🎲 Nhãn Quan Sắc Bén ×2 | Tự thân | Đổ 2 xúc xắc, lấy số cao | Nhãn quan chính trị sắc bén |
+| 🚩 Đường Cách Mệnh ×3 | Tự thân | Lần đi kế tiếp **+4 bước** | Tác phẩm *Đường cách mệnh* |
+| 🎲 Nhãn Quan Sắc Bén ×2 | Tự thân | Tung hai lần, lấy tổng cao hơn | Nhãn quan chính trị sắc bén |
 | 🛡️ Chủ Nghĩa Làm Cốt ×3 | Tự thân | **Khiên**: chặn kỹ năng đối kháng kế tiếp nhắm vào mình | "Đảng muốn vững thì phải có chủ nghĩa làm cốt" |
 | 💡 Soi Sáng ×3 | Hỗ trợ khi trả lời | Mở gợi ý | |
 | 🎯 Thu Hẹp Vòng Vây ×2 | Hỗ trợ khi trả lời | Loại 2 đáp án sai | |
@@ -60,7 +62,7 @@ vnr-v2/
 ├─ src/shared/room-core.ts   Logic phòng/đội/phân quyền, projectRoom (ẩn đáp án và tay bài đối thủ)
 ├─ backend/                  NestJS 11: AdminModule (đăng nhập, quản lý phòng), RoomsModule (người chơi), ErrorFilter
 ├─ slides/                   Bộ slide showcase 12 trang theo template FA26 + đánh giá
-└─ tests/                    engine.test.ts (20 test), load.mjs (30 client)
+└─ tests/                    engine.test.ts (22 test), load.mjs (30 client)
 ```
 
 * Trình duyệt chỉ nói chuyện với Next; Next **rewrite `/api/*` sang NestJS** (`BACKEND_URL`, mặc định `http://localhost:4000`) nên cookie là first-party, không cần CORS.
@@ -85,7 +87,7 @@ Production: `npm run build:all`, rồi `npm run backend:start` và `npm start`. 
 
 Một buổi chơi: quản trị vào `/admin` → đăng nhập → **Tạo phòng** → mở `/rooms/<mã>/board` lên màn hình lớp → người chơi vào `/play`, nhập mã, chọn đội → quản trị bấm **Bắt đầu**. Quản trị có thể tạm dừng, kết thúc sớm (đội dẫn đầu thắng) hoặc chơi lại.
 
-`npm test` chạy 20 test luật chơi; `npm run typecheck` kiểm tra cả Next và NestJS.
+`npm test` chạy 22 test luật chơi (gồm 2 bài kiểm tra nhịp ván bằng bot); `npm run typecheck` kiểm tra cả Next và NestJS.
 
 ## Mô phỏng Playwright chạy từ đầu (`e2e/simulate.cjs`)
 

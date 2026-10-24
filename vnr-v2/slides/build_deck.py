@@ -126,14 +126,14 @@ for i, (n, t, b) in enumerate(steps):
     text(s, x + 0.15, 1.8, 2, 0.8, n, 36, True, RGBColor(0xF7, 0xE7, 0xCF), font='Cambria')
     text(s, x + 0.15, 2.65, 2, 0.5, t, 17, True, RGBColor(255, 255, 255))
     text(s, x + 0.15, 3.2, 1.95, 1.2, b, 13, False, RGBColor(255, 255, 255))
-bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: bản đồ 6 cánh, vòng đua chung 42 ô + đường về nhà 4 ô; mỗi người một ngựa, tung 1 hoặc 6 để xuất chuồng; đáp xuống ô có ngựa đội khác (trừ ô ★) thì ĐÁ ngựa đó về chuồng, được tung thêm lượt.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 6 đội, mỗi đội 1-6 người (mỗi người một ngựa, một laptop); màn chiếu riêng cho lớp; 20-30 người cùng chơi.'], 15)
+bullets(s, 0.6, 4.8, 12, 2, ['Bàn cờ:: bản đồ 6 cánh, vòng đua 30 ô + đường về nhà 3 ô; mỗi đội 2-3 ngựa dùng chung, tung 2 xúc xắc (đi theo tổng), một viên ra 1 hoặc 6 để xuất chuồng; đáp xuống ô có ngựa đội khác (trừ ô ★) thì ĐÁ ngựa đó về chuồng; hai viên giống nhau thì tung thêm.', 'Mốc lịch sử:: mỗi chặng ngựa đi qua bật một mốc (1858, 1911, 1920, 1925, 1929).', 'Quy mô:: 6 đội, mỗi đội 1-6 người (một laptop mỗi người); ván giới hạn 10-20 phút, đội đưa 2 ngựa về đích trước thắng; màn chiếu riêng cho lớp.'], 15)
 
 # 7 ------------------------------------------------------------------------
 s = slide('DEMO trực tiếp: một lượt chơi', 'Sản phẩm sáng tạo · Demo', 7,
           'PHÚT 05-08 · Thành viên 3. DEMO THẬT: (1) mở màn chiếu /rooms/<mã>/board; (2) một đội đổ xúc xắc; (3) đọc câu hỏi, trả lời; (4) chỉ lời giải thích và số trang hiện sau mỗi lượt; (5) nhấn vào bảng xếp hạng. Chuẩn bị phương án dự phòng: video quay màn hình 60 giây.')
 picture(s, '06-projector.png', 0.6, 1.6, w=6.9)
 picture(s, '02-lobby-host.png', 7.7, 1.6, w=5.1)
-text(s, 0.6, 5.75, 7.4, 1.2, ['Màn chiếu cho cả lớp: bàn cờ, lượt, câu hỏi, bảng xếp hạng, diễn biến.', 'Phòng chờ: mỗi người chọn 1 trong 6 ngựa. Trên laptop của mình, người chơi thấy câu hỏi, 4 đáp án và thẻ kỹ năng riêng (đối thủ chỉ thấy số thẻ).'], 14, False, INK)
+text(s, 0.6, 5.75, 7.4, 1.2, ['Màn chiếu cho cả lớp: bàn cờ, lượt, câu hỏi, bảng xếp hạng, diễn biến.', 'Phòng chờ: mỗi người chọn 1 trong 6 đội. Trên laptop của mình, người chơi thấy câu hỏi, 4 đáp án, chọn ngựa đi và thẻ kỹ năng của đội (đối thủ chỉ thấy số thẻ).'], 14, False, INK)
 
 # 8 ------------------------------------------------------------------------
 s = slide('10 thẻ kỹ năng: dùng lên đối thủ để chặn đường về đích', 'Sản phẩm sáng tạo · Gắn với nội dung giáo trình', 8,
@@ -165,7 +165,7 @@ bullets(s, 0.6, 4.6, 12, 2.2, ['“[Trích phản hồi 1]”:: → [Thay đổi
 s = slide('Nhật ký cải tiến sản phẩm: từ v1 đến v2', 'Quy trình thiết kế · 04_Product_Prototype_DevelopmentLog', 10,
           'PHÚT 08-10 · Thành viên 4. So sánh v1 và v2. Giải thích lý do chuyển từ đấu máu 2 đội sang cá ngựa 6 đội: lớp đông, cần cả lớp cùng tham gia và có tương tác chặn nhau. Liệt kê rõ phần AI hỗ trợ trong 07_AI_Declaration.')
 card(s, 0.6, 1.7, 5.9, 4.4, 'v1 · Đấu Trường Tri Thức', ['2 đội đấu trực tiếp, thanh máu (HP)', 'Thẻ câu hỏi, thẻ đáp án, 10 kỹ năng công / thủ', 'Bán kết + chung kết, chỉ 4 đội', 'Nội dung: Tư tưởng Hồ Chí Minh', 'Hạn chế: nhiều đội ngồi chờ lâu; khó cho lớp 20-30 người'], GOLD)
-card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 đội, mỗi người một ngựa, đua trên bản đồ 6 cánh có chuồng', 'Xuất chuồng khi tung 1/6, đá ngựa về chuồng, tung thêm lượt', 'Đúng → nhận thẻ kỹ năng (10 loại) dùng chặn đối thủ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
+card(s, 6.8, 1.7, 5.9, 4.4, 'v2 · Cá Ngựa Cách Mạng', ['6 đội × 2-3 ngựa, 2 xúc xắc, chọn ngựa đi mỗi lượt', 'Ván tối đa 10-20 phút, đồng hồ trên đầu trang', 'Đúng → nhận thẻ kỹ năng (10 loại) dùng chặn đối thủ', '40 câu hỏi lấy từ Chương I, có giải thích + số trang', 'Backend NestJS, màn chiếu riêng, đo thử 30 client'], GREEN)
 text(s, 0.6, 6.3, 12, 0.5, 'Giới hạn hiện tại: dữ liệu phòng lưu trong bộ nhớ (mất khi khởi động lại); hướng phát triển: Redis, WebSocket, thêm bộ câu hỏi các chương khác.', 13, False, MUTED)
 
 # 11 -----------------------------------------------------------------------

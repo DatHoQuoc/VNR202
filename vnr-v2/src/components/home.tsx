@@ -22,11 +22,11 @@ export function Home() {
         <div className="panel">
           <h2>Luật chơi</h2>
           <ol>
-            <li><b>6 đội</b> (màu cố định). Mỗi người vào đội có <b>một con ngựa riêng</b>, tối đa 6 người mỗi đội. Các thành viên trong đội lần lượt đến lượt.</li>
-            <li><b>Xuất chuồng:</b> tung <b>1 hoặc 6</b> (hoặc chỉ 6 nếu chọn luật cổ điển) mới đưa ngựa ra ô xuất phát ★.</li>
-            <li>Mỗi lượt: (tuỳ chọn) dùng <b>1 thẻ kỹ năng</b> → <b>đổ xúc xắc</b> → trả lời <b>1 câu hỏi</b>. <b>Đúng</b>: nhận <b>1 thẻ</b>. <b>Sai / hết giờ</b>: không có thẻ nhưng ngựa vẫn đi.</li>
-            <li><b>Đá ngựa:</b> đáp xuống ô có ngựa đội khác (trừ ô ★ an toàn) thì ngựa đó bị <b>đá về chuồng</b>. Tung 6, đá ngựa hoặc về đích được <b>tung thêm lượt</b> (tối đa 2 lần liên tiếp).</li>
-            <li>Đi hết một vòng rồi rẽ vào <b>đường về nhà</b> (không ai đá được). Đội có đủ số ngựa về đích trước (mặc định 1) thắng.</li>
+            <li><b>6 đội</b> (màu cố định), mỗi đội 1-6 người và <b>2-3 ngựa dùng chung</b>. Các thành viên lần lượt đến lượt đổ xúc xắc.</li>
+            <li><b>2 xúc xắc</b>: ngựa đi theo <b>tổng hai viên</b>. Một ngựa đã ở ô xuất phát ★ sẵn; ngựa trong chuồng cần <b>một viên ra 1 hoặc 6</b> (hoặc chỉ 6 nếu chọn luật cổ điển) để xuất chuồng.</li>
+            <li>Mỗi lượt: (tuỳ chọn) dùng <b>1 thẻ kỹ năng</b> → <b>đổ xúc xắc</b> → trả lời <b>1 câu hỏi</b> → <b>chọn ngựa đi</b>. <b>Đúng</b>: nhận <b>1 thẻ</b>. <b>Sai / hết giờ</b>: không có thẻ nhưng ngựa vẫn đi.</li>
+            <li><b>Đá ngựa:</b> đáp xuống ô có ngựa đội khác (trừ ô ★ an toàn) thì ngựa đó bị <b>đá về chuồng</b>. Hai viên giống nhau, đá ngựa hoặc về đích được <b>tung thêm lượt</b> (tối đa 2 lần liên tiếp).</li>
+            <li>Đi hết một vòng rồi rẽ vào <b>đường về nhà</b> (không ai đá được). Đội đưa đủ số ngựa về đích trước (mặc định <b>2</b>) thắng. Ván có <b>giới hạn 10-20 phút</b>: hết giờ, đội có nhiều ngựa về đích nhất thắng.</li>
           </ol>
         </div>
         <div className="panel">

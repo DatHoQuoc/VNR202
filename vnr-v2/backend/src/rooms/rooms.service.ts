@@ -38,11 +38,13 @@ export class RoomsService implements OnModuleDestroy {
   }
 
   /* ---------------------------------------------------------------- admin */
-  create(title: string, questionSeconds: number, winHome: number, exitRule?: string): RoomRecord {
+  create(title: string, questionSeconds: number, winHome: number, exitRule?: string, horses?: number, timeLimitMin?: number): RoomRecord {
     const options: GameOptions = {};
     if (Number.isFinite(questionSeconds) && questionSeconds >= 10 && questionSeconds <= 90) options.questionMs = questionSeconds * 1000;
     if (Number.isInteger(winHome) && winHome >= 1 && winHome <= 6) options.winHome = winHome;
     options.exitRolls = exitRule === 'six' ? [6] : [1, 6];
+    options.horses = horses === 3 ? 3 : 2;
+    if (Number.isFinite(timeLimitMin) && (timeLimitMin as number) >= 5 && (timeLimitMin as number) <= 30) options.timeLimitMs = (timeLimitMin as number) * 60_000;
     return createRoom(this.rooms, title, options);
   }
 
@@ -50,7 +52,7 @@ export class RoomsService implements OnModuleDestroy {
     return [...this.rooms.values()].map((r) => getRoom(this.rooms, r.code)!).sort((a, b) => b.createdAt - a.createdAt).map((r) => ({
       code: r.code, title: r.title, status: r.status, createdAt: r.createdAt,
       players: r.players.length, teams: new Set(r.players.map((p) => p.slot)).size,
-      turn: r.game?.turnNumber ?? 0, winHome: r.options.winHome ?? 1
+      turn: r.game?.turnNumber ?? 0, winHome: r.options.winHome ?? 2, horses: r.options.horses ?? 2
     }));
   }
 
